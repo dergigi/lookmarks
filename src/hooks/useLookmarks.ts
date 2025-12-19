@@ -85,13 +85,13 @@ function parseAddressableTag(aTag: string): { kind: number; pubkey: string; iden
 const MAX_HINT_RELAYS = 5;
 
 /**
- * Validates a relay URL is a proper WebSocket URL.
- * Only allows wss:// and ws:// schemes to prevent arbitrary outbound requests.
+ * Validates a relay URL is a secure WebSocket URL.
+ * Only allows wss:// to prevent mixed-content failures on HTTPS origins.
  */
 function isValidRelayUrl(url: string): boolean {
   try {
     const parsed = new URL(url);
-    return parsed.protocol === 'wss:' || parsed.protocol === 'ws:';
+    return parsed.protocol === 'wss:';
   } catch {
     return false;
   }
@@ -110,9 +110,9 @@ export function useLookmarks(pubkey?: string) {
   const { nostr } = useNostr();
   const { config } = useAppContext();
 
-  // Extract relay URLs for cache key differentiation
+  // Extract all relay URLs for cache key differentiation (read + write)
   const relayUrls = useMemo(
-    () => config.relayMetadata.relays.filter(r => r.read).map(r => r.url),
+    () => config.relayMetadata.relays.map(r => r.url),
     [config.relayMetadata.relays]
   );
 

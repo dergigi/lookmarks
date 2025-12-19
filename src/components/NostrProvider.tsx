@@ -68,13 +68,13 @@ const NostrProvider: React.FC<NostrProviderProps> = (props) => {
     if (!pool.current || typeof pool.current.group !== 'function') return;
 
     // Track failed relays to avoid repeated connection storms.
-    // Uses sessionStorage so failures reset on new browser sessions.
+    // Uses localStorage for cross-tab persistence with TTL-based expiry.
     const FAILED_RELAYS_KEY = 'lookmarks:failed-prewarm-relays';
     const FAILURE_TTL_MS = 5 * 60 * 1000; // 5 minute backoff
 
     let failedRelays: Record<string, number> = {};
     try {
-      const stored = sessionStorage.getItem(FAILED_RELAYS_KEY);
+      const stored = localStorage.getItem(FAILED_RELAYS_KEY);
       if (stored) failedRelays = JSON.parse(stored);
     } catch {
       // Ignore parse errors
@@ -104,9 +104,9 @@ const NostrProvider: React.FC<NostrProviderProps> = (props) => {
     // Persist updated failure tracking
     try {
       if (Object.keys(updatedFailures).length > 0) {
-        sessionStorage.setItem(FAILED_RELAYS_KEY, JSON.stringify(updatedFailures));
+        localStorage.setItem(FAILED_RELAYS_KEY, JSON.stringify(updatedFailures));
       } else {
-        sessionStorage.removeItem(FAILED_RELAYS_KEY);
+        localStorage.removeItem(FAILED_RELAYS_KEY);
       }
     } catch {
       // Ignore storage errors
