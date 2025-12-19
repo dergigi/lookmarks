@@ -185,25 +185,23 @@ export function LookmarkCard({ lookmarkedEvent }: LookmarkCardProps) {
           <Button
             variant="ghost"
             size="sm"
-            className="h-8 px-1 sm:px-2 text-xs"
+            className="h-8 w-8 p-0"
             onClick={handleOpenNjump}
             aria-label="Open in njump.to"
             title="Open in njump.to"
           >
-            <ExternalLink className="h-3.5 w-3.5 mr-0 sm:mr-1" />
-            <span className="hidden sm:inline">njump</span>
+            <ExternalLink className="h-3.5 w-3.5" />
           </Button>
           
           <Button
             variant="ghost"
             size="sm"
-            className="h-8 px-1 sm:px-2 text-xs"
+            className="h-8 w-8 p-0"
             onClick={handleOpenNative}
             aria-label="Open in your Nostr client"
             title="Open in your Nostr client"
           >
-            <FontAwesomeIcon icon={faMobileScreen} className="h-3.5 w-3.5 mr-0 sm:mr-1" />
-            <span className="hidden sm:inline">Native</span>
+            <FontAwesomeIcon icon={faMobileScreen} className="h-3.5 w-3.5" />
           </Button>
         </div>
       </CardFooter>
