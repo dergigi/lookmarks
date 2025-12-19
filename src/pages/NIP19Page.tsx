@@ -1,7 +1,7 @@
 import { useMemo } from 'react';
 import { nip19 } from 'nostr-tools';
 import { useNavigate, useParams } from 'react-router-dom';
-import { ArrowLeft, ExternalLink, Loader2, Eye, Heart, MessageSquare, Repeat, ChevronDown } from 'lucide-react';
+import { ArrowLeft, ExternalLink, Loader2, Eye, Heart, MessageSquare, Repeat, RefreshCw } from 'lucide-react';
 import type { NostrEvent } from '@nostrify/nostrify';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faMobileScreen } from '@fortawesome/free-solid-svg-icons';
@@ -219,7 +219,7 @@ function ProfileLookmarksView({ pubkey }: { pubkey: string }) {
                   {isFetchingNextPage ? (
                     <Loader2 className="h-3 w-3 animate-spin" />
                   ) : (
-                    <ChevronDown className="h-3 w-3" />
+                    <RefreshCw className="h-3 w-3" />
                   )}
                   <span className="font-medium text-foreground">more</span>
                 </button>
