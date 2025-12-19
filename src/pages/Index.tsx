@@ -154,8 +154,12 @@ const Index = () => {
           <div className="flex items-center justify-between gap-4">
             <div className="flex items-center gap-3 min-w-0">
               <div className="shrink-0">
-                <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-amber-400 to-orange-500 flex items-center justify-center shadow-lg shadow-amber-500/25">
-                  <span role="img" aria-label="Lookmarks" className="text-lg leading-none text-white">
+                <div className="relative w-10 h-10 flex items-center justify-center">
+                  <div
+                    aria-hidden
+                    className="absolute inset-0 rounded-2xl bg-gradient-to-br from-amber-500/25 via-orange-500/15 to-rose-500/20 blur-md"
+                  />
+                  <span role="img" aria-label="Lookmarks" className="relative text-2xl leading-none">
                     👀
                   </span>
                 </div>
