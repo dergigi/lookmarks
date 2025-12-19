@@ -264,7 +264,7 @@ const Index = () => {
               <Eye className="h-4 w-4 text-amber-500" />
               <span>Read-only Nostr client for discovering lookmarks</span>
             </div>
-            <div className="flex items-center gap-4">
+            <div className="flex flex-wrap items-center justify-center gap-x-4 gap-y-2">
               <a
                 href="https://github.com/dergigi/lookmarks"
                 target="_blank"
@@ -275,6 +275,16 @@ const Index = () => {
               >
                 <Github className="h-4 w-4" />
                 <span>GitHub</span>
+              </a>
+              <a
+                href="https://shakespeare.diy/"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="underline hover:text-foreground transition-colors"
+                aria-label="Shakespeare (prototype tool)"
+                title="Prototyped with Shakespeare"
+              >
+                Prototyped with Shakespeare
               </a>
               <p className="text-sm text-muted-foreground">
                 Created by{' '}
