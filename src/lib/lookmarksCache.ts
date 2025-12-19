@@ -44,11 +44,34 @@ async function getDB(): Promise<IDBPDatabase<LookmarksCacheDB> | null> {
 }
 
 /**
- * Generates a cache key for a lookmarks query.
+ * Creates a short hash from relay URLs for cache key differentiation.
+ * This ensures cache entries are scoped to the current relay configuration.
  */
-export function getCacheKey(pubkey?: string, pageParam?: number): string {
+function hashRelayUrls(relayUrls: string[]): string {
+  // Simple hash: sort URLs, join, and take first 8 chars of base64
+  const sorted = [...relayUrls].sort().join('|');
+  let hash = 0;
+  for (let i = 0; i < sorted.length; i++) {
+    const char = sorted.charCodeAt(i);
+    hash = ((hash << 5) - hash) + char;
+    hash = hash & hash; // Convert to 32bit integer
+  }
+  return Math.abs(hash).toString(36).slice(0, 8);
+}
+
+/**
+ * Generates a cache key for a lookmarks query.
+ * Includes relay configuration hash to prevent stale data across account/relay switches.
+ */
+export function getCacheKey(
+  pubkey?: string,
+  pageParam?: number,
+  relayUrls?: string[]
+): string {
   const base = pubkey ?? 'global';
-  return pageParam ? `${base}:${pageParam}` : base;
+  const relayHash = relayUrls?.length ? hashRelayUrls(relayUrls) : 'default';
+  const key = `${base}:${relayHash}`;
+  return pageParam ? `${key}:${pageParam}` : key;
 }
 
 /**

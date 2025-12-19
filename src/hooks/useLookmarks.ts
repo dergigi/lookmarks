@@ -1,8 +1,9 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { useNostr } from '@nostrify/react';
 import { useInfiniteQuery } from '@tanstack/react-query';
 import type { NostrEvent } from '@nostrify/nostrify';
 import { SEARCH_RELAY_URLS } from '@/lib/nostrSearchRelays';
+import { useAppContext } from '@/hooks/useAppContext';
 import {
   getCacheKey,
   getStaleCachedLookmarks,
@@ -107,15 +108,22 @@ function isValidRelayUrl(url: string): boolean {
  */
 export function useLookmarks(pubkey?: string) {
   const { nostr } = useNostr();
+  const { config } = useAppContext();
+
+  // Extract relay URLs for cache key differentiation
+  const relayUrls = useMemo(
+    () => config.relayMetadata.relays.filter(r => r.read).map(r => r.url),
+    [config.relayMetadata.relays]
+  );
 
   // Load cached data for instant first paint (stale-while-revalidate)
   const [cachedFirstPage, setCachedFirstPage] = useState<LookmarkedEvent[] | null>(null);
   useEffect(() => {
-    const cacheKey = getCacheKey(pubkey);
+    const cacheKey = getCacheKey(pubkey, undefined, relayUrls);
     getStaleCachedLookmarks<LookmarkedEvent>(cacheKey).then((result) => {
       if (result) setCachedFirstPage(result.data);
     });
-  }, [pubkey]);
+  }, [pubkey, relayUrls]);
 
   const query = useInfiniteQuery<LookmarksPage>({
     queryKey: ['nostr', 'lookmarks', pubkey ?? 'global'],
@@ -421,7 +429,7 @@ export function useLookmarks(pubkey?: string) {
 
       // Cache first page results for stale-while-revalidate on next visit
       if (!pageParam && results.length > 0) {
-        const cacheKey = getCacheKey(pubkey);
+        const cacheKey = getCacheKey(pubkey, undefined, relayUrls);
         cacheLookmarks(cacheKey, results).catch(() => {
           // Ignore cache write failures
         });
