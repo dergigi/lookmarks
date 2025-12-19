@@ -103,8 +103,9 @@ const Index = () => {
       : null;
 
   useSeoMeta({
-    title: 'Lookmarks - Discover 👀 Reactions on Nostr',
-    description: 'Explore events that caught people\'s attention with 👀 reactions. A read-only Nostr client for discovering interesting content.',
+    title: 'Lookmarks - Find what’s catching people’s eyes',
+    description:
+      'Find what’s catching people’s eyes on Nostr — events marked with 👀 reactions, replies, or quotes. A read-only client for discovering interesting content.',
   });
 
   const handleSearch = () => {
@@ -198,13 +199,15 @@ const Index = () => {
         <div className="max-w-4xl mx-auto px-4 py-12 relative w-full">
           <div className="text-center mb-8">
             <h2 className="text-3xl md:text-4xl font-bold mb-3">
-              Discover What’s{' '}
+              Find what’s{' '}
               <span className="inline-flex items-center gap-1">
-                <span className="bg-gradient-to-r from-amber-500 to-orange-500 bg-clip-text text-transparent">Catching Eyes</span>
+                <span className="bg-gradient-to-r from-amber-500 to-orange-500 bg-clip-text text-transparent">
+                  catching people’s eyes
+                </span>
               </span>
             </h2>
             <p className="text-muted-foreground max-w-lg mx-auto">
-              A feed of things people found interesting enough to throw some eyes on.
+              A feed of events the crowd can’t stop looking at.
               {' '}
               <Link
                 to="/what"
