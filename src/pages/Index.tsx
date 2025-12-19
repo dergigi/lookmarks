@@ -1,13 +1,12 @@
 import { useEffect, useMemo, useState } from 'react';
 import { useSeoMeta } from '@unhead/react';
-import { Eye, Search, Globe, User } from 'lucide-react';
+import { Eye, Search } from 'lucide-react';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faCircleInfo } from '@fortawesome/free-solid-svg-icons';
 import { nip19 } from 'nostr-tools';
 import { Link, useNavigate } from 'react-router-dom';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import {
   Tooltip,
   TooltipContent,
@@ -42,8 +41,6 @@ function isValidPubkey(input: string): string | null {
 
 const Index = () => {
   const [searchInput, setSearchInput] = useState('');
-  const [searchedPubkey, setSearchedPubkey] = useState<string | undefined>();
-  const [activeTab, setActiveTab] = useState<'global' | 'user' | 'mine'>('global');
   const [searchError, setSearchError] = useState<string | null>(null);
   const [isSearchFocused, setIsSearchFocused] = useState(false);
   const [placeholderIndex, setPlaceholderIndex] = useState(0);
@@ -123,8 +120,6 @@ const Index = () => {
 
     const pubkey = isValidPubkey(searchTerm);
     if (pubkey) {
-      setSearchedPubkey(pubkey);
-      setActiveTab('user');
       setSearchError(null);
       if (trimmed.length === 0 && placeholderNpub) {
         setSearchInput(placeholderNpub);
@@ -138,12 +133,6 @@ const Index = () => {
   const handleKeyDown = (e: React.KeyboardEvent) => {
     if (e.key === 'Enter') {
       handleSearch();
-    }
-  };
-
-  const handleViewMyLookmarks = () => {
-    if (user) {
-      setActiveTab('mine');
     }
   };
 
@@ -266,7 +255,7 @@ const Index = () => {
                 <Button
                   variant="outline"
                   size="sm"
-                  onClick={handleViewMyLookmarks}
+                  onClick={() => navigate(`/p/${nip19.npubEncode(user.pubkey)}`)}
                   className="text-xs"
                 >
                   <Eye className="h-3 w-3 mr-1" />
@@ -280,48 +269,7 @@ const Index = () => {
 
       {/* Main Content */}
       <main className="max-w-4xl mx-auto px-4 py-8 flex-1 w-full">
-        <Tabs value={activeTab} onValueChange={(v) => setActiveTab(v as 'global' | 'user' | 'mine')}>
-          <TabsList className="w-full max-w-md mx-auto grid grid-cols-3 mb-8">
-            <TabsTrigger value="global" className="flex items-center gap-2">
-              <Globe className="h-4 w-4" />
-              <span className="hidden sm:inline">Global</span>
-            </TabsTrigger>
-            <TabsTrigger value="user" className="flex items-center gap-2" disabled={!searchedPubkey}>
-              <User className="h-4 w-4" />
-              <span className="hidden sm:inline">User</span>
-            </TabsTrigger>
-            <TabsTrigger value="mine" className="flex items-center gap-2" disabled={!user}>
-              <Eye className="h-4 w-4" />
-              <span className="hidden sm:inline">Mine</span>
-            </TabsTrigger>
-          </TabsList>
-
-          <TabsContent value="global" className="mt-0">
-            <LookmarkFeed />
-          </TabsContent>
-
-          <TabsContent value="user" className="mt-0">
-            {searchedPubkey ? (
-              <LookmarkFeed pubkey={searchedPubkey} />
-            ) : (
-              <div className="text-center py-12 text-muted-foreground">
-                <User className="h-12 w-12 mx-auto mb-4 opacity-50" />
-                <p>Search for a user to see their lookmarks</p>
-              </div>
-            )}
-          </TabsContent>
-
-          <TabsContent value="mine" className="mt-0">
-            {user ? (
-              <LookmarkFeed pubkey={user.pubkey} />
-            ) : (
-              <div className="text-center py-12 text-muted-foreground">
-                <Eye className="h-12 w-12 mx-auto mb-4 opacity-50" />
-                <p>Log in to see your own lookmarks</p>
-              </div>
-            )}
-          </TabsContent>
-        </Tabs>
+        <LookmarkFeed />
       </main>
 
       {/* Footer */}
