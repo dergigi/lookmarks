@@ -113,6 +113,9 @@ function ProfileLookmarksView({ pubkey }: { pubkey: string }) {
       <Card className="border-border/50 bg-card/50">
         <CardHeader className="pb-3">
           <div className="flex items-center gap-3">
+            <div className="h-12 w-12 rounded-full bg-gradient-to-br from-amber-500/20 to-amber-600/10 flex items-center justify-center shrink-0">
+              <span className="text-2xl">👀</span>
+            </div>
             {author.isLoading ? (
               <Skeleton className="h-12 w-12 rounded-full" />
             ) : (
