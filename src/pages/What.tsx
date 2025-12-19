@@ -110,6 +110,10 @@ export default function What() {
           </div>
         </div>
 
+        <p className="text-muted-foreground leading-relaxed mt-8">
+          There might be more types of lookmarks that one could think of (e.g. zaps, or other ways to react to notes) but for now the above three will have to do.
+        </p>
+
         <hr className="my-10 border-border" />
 
         <p className="text-muted-foreground leading-relaxed">
