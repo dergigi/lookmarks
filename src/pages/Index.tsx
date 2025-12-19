@@ -199,14 +199,14 @@ const Index = () => {
         <div className="max-w-4xl mx-auto px-4 py-12 relative w-full">
           <div className="text-center mb-8">
             <h2 className="text-3xl md:text-4xl font-bold mb-3">
-              Find what's worth a{' '}
+              Discover what's{' '}
               <span className="inline-flex items-center gap-1">
-                <span className="bg-gradient-to-r from-amber-500 to-orange-500 bg-clip-text text-transparent">second look</span>
+                <span className="bg-gradient-to-r from-amber-500 to-orange-500 bg-clip-text text-transparent">catching eyes</span>
                 <span className="text-3xl md:text-4xl">👀</span>
               </span>
             </h2>
             <p className="text-muted-foreground max-w-lg mx-auto">
-              Discover Nostr events that caught people's attention. Every 👀 reaction is a signal that something interesting happened.
+              A read-only feed of Nostr events people marked with 👀 reactions, replies, or quotes — a lightweight signal something is worth your time.
             </p>
           </div>
 
