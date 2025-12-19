@@ -25,6 +25,7 @@ export function ConnectedRelaysPill({ className }: { className?: string }) {
               type="button"
               className={cn(
                 'inline-flex items-center gap-1 text-sm',
+                'align-baseline',
                 'text-muted-foreground hover:text-foreground transition-colors cursor-pointer',
                 'underline underline-offset-4 decoration-border hover:decoration-foreground/50',
                 'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-amber-500/40 rounded-sm',

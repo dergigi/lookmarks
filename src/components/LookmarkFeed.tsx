@@ -130,7 +130,7 @@ export function LookmarkFeed({ pubkey }: LookmarkFeedProps) {
           Found{' '}
           <span className="font-semibold text-foreground">{lookmarks.length}</span>
           {' '}
-          lookmarks across <ConnectedRelaysPill className="align-middle" />
+          lookmarks across <ConnectedRelaysPill className="align-baseline" />
         </p>
         <Button
           variant="ghost"
