@@ -1,4 +1,3 @@
-import { Radio } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { useAppContext } from '@/hooks/useAppContext';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
@@ -25,18 +24,15 @@ export function ConnectedRelaysPill({ className }: { className?: string }) {
             <button
               type="button"
               className={cn(
-                'inline-flex items-center gap-1.5 px-2 py-1 rounded-full text-xs',
-                'bg-emerald-500/10 text-emerald-600 dark:text-emerald-400',
-                'hover:bg-emerald-500/20 transition-colors cursor-pointer',
-                'border border-emerald-500/20',
+                'inline-flex items-center gap-1 text-sm',
+                'text-muted-foreground hover:text-foreground transition-colors cursor-pointer',
+                'underline underline-offset-4 decoration-border hover:decoration-foreground/50',
+                'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-amber-500/40 rounded-sm',
                 className,
               )}
             >
-              <Radio className="h-3 w-3" />
-              <span className="font-medium">{readRelays.length}</span>
-              <span className="text-emerald-600/70 dark:text-emerald-400/70">
-                {readRelays.length === 1 ? 'relay' : 'relays'}
-              </span>
+              <span className="font-medium text-foreground">{readRelays.length}</span>
+              <span>{readRelays.length === 1 ? 'relay' : 'relays'}</span>
             </button>
           </PopoverTrigger>
         </TooltipTrigger>
@@ -48,7 +44,6 @@ export function ConnectedRelaysPill({ className }: { className?: string }) {
       <PopoverContent align="start" className="w-72 p-3">
         <div className="space-y-2">
           <div className="flex items-center gap-2 text-sm font-medium text-foreground">
-            <Radio className="h-4 w-4 text-emerald-500" />
             <span>Connected Relays</span>
           </div>
 
