@@ -2,6 +2,8 @@
 
 Find what’s catching people’s eyes on Nostr: events with 👀 reactions, replies, or quotes.
 
+Live: [`lookmarks.dergigi.com`](https://lookmarks.dergigi.com/)
+
 ## What are lookmarks?
 
 A **lookmark** is when someone reacts to a post with 👀 — it’s like a bookmark, but less official.
