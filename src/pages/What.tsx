@@ -123,7 +123,7 @@ export default function What() {
         </p>
 
         <p className="text-sm text-muted-foreground mt-10">
-          Built on <a href="https://nostr.com" target="_blank" rel="noopener noreferrer" className="underline hover:text-foreground transition-colors">Nostr</a>
+          Created by <a href="https://dergigi.com/nostr/" target="_blank" rel="noopener noreferrer" className="underline hover:text-foreground transition-colors">Gigi</a>
         </p>
       </div>
     </div>
