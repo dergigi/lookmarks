@@ -77,7 +77,7 @@ export function LookmarkFeed({ pubkey }: LookmarkFeedProps) {
       <div className="space-y-4">
         <div className="flex items-center justify-center gap-2 text-muted-foreground py-4">
           <Loader2 className="h-5 w-5 animate-spin" />
-          <span>Scanning for 👀 lookmarks...</span>
+          <span>Looking for 👀 lookmarks...</span>
         </div>
         {Array.from({ length: 5 }).map((_, i) => (
           <LookmarkSkeleton key={i} />
