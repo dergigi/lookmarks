@@ -1,4 +1,4 @@
-import { Eye, Github } from 'lucide-react';
+import { Github } from 'lucide-react';
 import { Link } from 'react-router-dom';
 
 export function AppFooter() {
@@ -6,8 +6,7 @@ export function AppFooter() {
     <footer className="border-t border-border/40">
       <div className="max-w-4xl mx-auto px-4 py-6 w-full">
         <div className="flex flex-col sm:flex-row items-center justify-between gap-4 text-sm text-muted-foreground">
-          <div className="flex items-center gap-2">
-            <Eye className="h-4 w-4 text-amber-500" />
+          <div className="flex items-center gap-4">
             <Link
               to="/what"
               className="underline hover:text-foreground transition-colors"
@@ -16,6 +15,26 @@ export function AppFooter() {
             >
               About
             </Link>
+            <a
+              href="https://ants.sh/?q=lookmarks"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="underline hover:text-foreground transition-colors"
+              aria-label="Lookmarks on Ants"
+              title="Lookmarks"
+            >
+              &quot;Lookmarks&quot;
+            </a>
+            <a
+              href="https://ants.sh/?q=%F0%9F%91%80"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="underline hover:text-foreground transition-colors"
+              aria-label="Eyes emoji on Ants"
+              title="👀"
+            >
+              👀
+            </a>
           </div>
 
           <div className="flex flex-wrap items-center justify-center gap-x-4 gap-y-2">
@@ -29,17 +48,6 @@ export function AppFooter() {
             >
               <Github className="h-4 w-4" />
               <span>GitHub</span>
-            </a>
-
-            <a
-              href="https://ants.sh/"
-              target="_blank"
-              rel="noopener noreferrer"
-              className="underline hover:text-foreground transition-colors"
-              aria-label="ants.sh"
-              title="ants.sh"
-            >
-              ants.sh
             </a>
 
             <span className="text-sm text-muted-foreground">
