@@ -1,5 +1,5 @@
 import { nip19 } from 'nostr-tools';
-import { ExternalLink, Eye, Clock, MessageSquare, Heart, Repeat } from 'lucide-react';
+import { ExternalLink, Clock, MessageSquare, Heart, Repeat } from 'lucide-react';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faMobileScreen } from '@fortawesome/free-solid-svg-icons';
 import { Card, CardContent, CardFooter, CardHeader } from '@/components/ui/card';
@@ -133,22 +133,10 @@ export function LookmarkCard({ lookmarkedEvent }: LookmarkCardProps) {
         </div>
       </CardContent>
       
-      <CardFooter className="pt-0 flex items-center justify-between border-t border-border/30 mt-2 pt-3 flex-wrap gap-2">
+      <CardFooter className="flex items-center justify-between border-t border-border/30 mt-2 pt-3 flex-wrap gap-2">
         <div className="flex items-center gap-3 flex-wrap">
           {/* Lookmark stats */}
           <div className="flex items-center gap-2 text-xs text-muted-foreground">
-            <Tooltip>
-              <TooltipTrigger asChild>
-                <div className="flex items-center gap-1 bg-amber-500/10 text-amber-600 dark:text-amber-400 px-2 py-1 rounded-full">
-                  <Eye className="h-3.5 w-3.5" />
-                  <span className="font-medium">{lookmarks.length}</span>
-                </div>
-              </TooltipTrigger>
-              <TooltipContent>
-                <p>👀 Lookmarks</p>
-              </TooltipContent>
-            </Tooltip>
-            
             {reactionCount > 0 && (
               <Tooltip>
                 <TooltipTrigger asChild>
