@@ -85,7 +85,7 @@ export function NIP19Page() {
 
 function PageShell({ onBack, children }: { onBack: () => void; children: React.ReactNode }) {
   return (
-    <div className="min-h-screen bg-gradient-to-b from-background via-background to-amber-500/5">
+    <div className="flex flex-1 flex-col bg-gradient-to-b from-background via-background to-amber-500/5">
       <header className="border-b border-border/40 backdrop-blur-sm bg-background/80 sticky top-0 z-50">
         <div className="max-w-4xl mx-auto px-4 py-4 w-full">
           <Button variant="ghost" size="icon" onClick={onBack} aria-label="Back" title="Back">

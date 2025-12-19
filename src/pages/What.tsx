@@ -9,7 +9,7 @@ export default function What() {
   });
 
   return (
-    <div className="min-h-screen bg-background">
+    <div className="flex flex-1 bg-background">
       <div className="max-w-xl mx-auto px-6 py-12">
         <Link
           to="/"
@@ -124,10 +124,6 @@ export default function What() {
           >
             npub1dergggklka99wwrs92yz8wdjs952h2ux2ha2ed598ngwu9w7a6fsh9xzpc
           </Link>
-        </p>
-
-        <p className="text-sm text-muted-foreground mt-10">
-          Created by <a href="https://dergigi.com/nostr/" target="_blank" rel="noopener noreferrer" className="underline hover:text-foreground transition-colors">Gigi</a>
         </p>
       </div>
     </div>
