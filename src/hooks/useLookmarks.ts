@@ -4,7 +4,14 @@ import type { NostrEvent } from '@nostrify/nostrify';
 import { SEARCH_RELAY_URLS } from '@/lib/nostrSearchRelays';
 
 const EYES_EMOJI = '👀';
-const PAGE_SIZE = 100; // Number of lookmark events to fetch per page
+
+// Mobile detection for adaptive timeouts and page sizes.
+// Mobile connections are often slower/less reliable.
+const isMobile = typeof navigator !== 'undefined' &&
+  /iPhone|iPad|iPod|Android/i.test(navigator.userAgent);
+
+const PAGE_SIZE = isMobile ? 50 : 100; // Smaller batches on mobile for faster TTFB
+const QUERY_TIMEOUT = isMobile ? 20000 : 10000; // Longer timeout on mobile (20s vs 10s)
 
 /** Dedupe events by ID, keeping the first occurrence */
 function dedupeEvents(events: NostrEvent[]): NostrEvent[] {
@@ -80,7 +87,7 @@ export function useLookmarks(pubkey?: string) {
   return useInfiniteQuery<LookmarksPage>({
     queryKey: ['nostr', 'lookmarks', pubkey ?? 'global'],
     queryFn: async ({ pageParam, signal }) => {
-      const timeout = AbortSignal.timeout(10000);
+      const timeout = AbortSignal.timeout(QUERY_TIMEOUT);
       const combinedSignal = AbortSignal.any([signal, timeout]);
 
       // Build author filter if pubkey provided
