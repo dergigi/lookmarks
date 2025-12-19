@@ -173,11 +173,11 @@ export function LookmarkCard({ lookmarkedEvent }: LookmarkCardProps) {
                   to={`/p/${latestLookmarkNpub}`}
                   className="font-medium text-foreground hover:underline"
                 >
-                  @{latestLookmarkDisplayName}
+                  {latestLookmarkDisplayName}
                 </Link>
               ) : (
                 <span className="font-medium text-foreground">
-                  @{latestLookmarkDisplayName}
+                  {latestLookmarkDisplayName}
                 </span>
               )}{' '}
               {formatTimestamp(latestLookmarkAt)}
