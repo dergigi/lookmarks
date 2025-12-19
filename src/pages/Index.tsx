@@ -102,22 +102,33 @@ const Index = () => {
       ? recentLookmarkerNpubs[placeholderIndex % recentLookmarkerNpubs.length]
       : 'Enter npub or pubkey to see their lookmarks...';
 
+  const placeholderNpub =
+    recentLookmarkerNpubs.length > 0
+      ? recentLookmarkerNpubs[placeholderIndex % recentLookmarkerNpubs.length]
+      : null;
+
   useSeoMeta({
     title: 'Lookmarks - Discover 👀 Reactions on Nostr',
     description: 'Explore events that caught people\'s attention with 👀 reactions. A read-only Nostr client for discovering interesting content.',
   });
 
   const handleSearch = () => {
-    if (!searchInput.trim()) {
+    const trimmed = searchInput.trim();
+    const searchTerm = trimmed.length > 0 ? trimmed : placeholderNpub;
+
+    if (!searchTerm) {
       setSearchError('Please enter an npub or pubkey');
       return;
     }
 
-    const pubkey = isValidPubkey(searchInput.trim());
+    const pubkey = isValidPubkey(searchTerm);
     if (pubkey) {
       setSearchedPubkey(pubkey);
       setActiveTab('user');
       setSearchError(null);
+      if (trimmed.length === 0 && placeholderNpub) {
+        setSearchInput(placeholderNpub);
+      }
     } else {
       setSearchError('Invalid npub or pubkey format');
     }
@@ -202,7 +213,6 @@ const Index = () => {
               Discover what's{' '}
               <span className="inline-flex items-center gap-1">
                 <span className="bg-gradient-to-r from-amber-500 to-orange-500 bg-clip-text text-transparent">catching eyes</span>
-                <span className="text-3xl md:text-4xl">👀</span>
               </span>
             </h2>
             <p className="text-muted-foreground max-w-lg mx-auto">
