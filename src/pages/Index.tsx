@@ -153,12 +153,11 @@ const Index = () => {
         <div className="max-w-4xl mx-auto px-4 py-4 w-full">
           <div className="flex items-center justify-between gap-4">
             <div className="flex items-center gap-3 min-w-0">
-              <div className="relative shrink-0">
+              <div className="shrink-0">
                 <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-amber-400 to-orange-500 flex items-center justify-center shadow-lg shadow-amber-500/25">
-                  <Eye className="h-5 w-5 text-white" />
-                </div>
-                <div className="absolute -bottom-0.5 -right-0.5 w-4 h-4 rounded-full bg-gradient-to-br from-amber-300 to-amber-500 flex items-center justify-center text-[10px] animate-pulse">
-                  👀
+                  <span role="img" aria-label="Lookmarks" className="text-lg leading-none text-white">
+                    👀
+                  </span>
                 </div>
               </div>
               <div className="min-w-0">
@@ -217,6 +216,13 @@ const Index = () => {
             </h2>
             <p className="text-muted-foreground max-w-lg mx-auto">
               A feed of things people found interesting enough to throw some eyes on.
+              {' '}
+              <Link
+                to="/what"
+                className="font-medium text-foreground/90 underline underline-offset-4 decoration-border hover:text-foreground transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-amber-500/40 rounded-sm"
+              >
+                What are Lookmarks?
+              </Link>
             </p>
           </div>
 
