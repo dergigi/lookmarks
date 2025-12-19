@@ -2,11 +2,24 @@ import { createContext } from "react";
 
 export type Theme = "dark" | "light" | "system";
 
+/** Source of a relay configuration */
+export type RelaySource = 'user' | 'fallback' | 'search';
+
+export interface RelayConfig {
+  url: string;
+  read: boolean;
+  write: boolean;
+  /** Where this relay came from - helps UI distinguish user's relays from system defaults */
+  source?: RelaySource;
+}
+
 export interface RelayMetadata {
   /** List of relays with read/write permissions */
-  relays: { url: string; read: boolean; write: boolean }[];
+  relays: RelayConfig[];
   /** Unix timestamp of when the relay list was last updated */
   updatedAt: number;
+  /** Whether user has explicitly disabled fallback relays */
+  fallbacksDisabled?: boolean;
 }
 
 export interface AppConfig {
