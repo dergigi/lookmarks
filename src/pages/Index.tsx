@@ -223,7 +223,7 @@ const Index = () => {
               {' '}
               <Link
                 to="/what"
-                className="font-medium text-foreground/90 underline underline-offset-4 decoration-border hover:text-foreground transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-amber-500/40 rounded-sm"
+                className="font-medium underline underline-offset-4 decoration-border hover:decoration-foreground/50 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-amber-500/40 rounded-sm"
               >
                 What are Lookmarks?
               </Link>
