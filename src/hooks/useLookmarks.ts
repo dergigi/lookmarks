@@ -9,8 +9,10 @@ const ENABLE_REACTION_SCAN_FALLBACK = true; // Toggle kind:7 fallback scan
 
 /** A lookmarked event with metadata about how it was lookmarked */
 export interface LookmarkedEvent {
-  /** The original event that was lookmarked */
-  event: NostrEvent;
+  /** The original event that was lookmarked, or null if target couldn't be resolved */
+  event: NostrEvent | null;
+  /** The target event ID or addressable coordinate (for display when event is null) */
+  targetId: string;
   /** The lookmark events (reactions, replies, quotes) */
   lookmarks: NostrEvent[];
   /** Most recent lookmark timestamp */
@@ -221,12 +223,13 @@ export function useLookmarks(pubkey?: string) {
         }
       }
 
-      // Group lookmarks by their target event
+      // Group lookmarks by their target event.
+      // Keep lookmarks even if target wasn't resolved - we'll show a placeholder.
       const lookmarksByTarget = new Map<string, NostrEvent[]>();
-      
+
       for (const event of allLookmarkEvents) {
         let targetKey: string | undefined;
-        
+
         if (event.kind === 7) {
           const eTag = event.tags.find(([name]) => name === 'e');
           targetKey = eTag?.[1];
@@ -240,33 +243,36 @@ export function useLookmarks(pubkey?: string) {
               targetKey = aTag[1]; // Use a-tag format as key
             } else {
               const eTags = event.tags.filter(([name]) => name === 'e');
-              const replyTag = eTags.find(([, , , marker]) => marker === 'reply') 
+              const replyTag = eTags.find(([, , , marker]) => marker === 'reply')
                 || eTags[eTags.length - 1];
               targetKey = replyTag?.[1];
             }
           }
         }
 
-        if (targetKey && eventMap.has(targetKey)) {
-          const existing = lookmarksByTarget.get(targetKey) || [];
-          existing.push(event);
-          lookmarksByTarget.set(targetKey, existing);
-        }
+        // Always group by targetKey, even if target event wasn't resolved.
+        // This prevents empty feeds when search relays return lookmarks
+        // but the target events live on different relays.
+        if (!targetKey) continue;
+
+        const existing = lookmarksByTarget.get(targetKey) || [];
+        existing.push(event);
+        lookmarksByTarget.set(targetKey, existing);
       }
 
-      // Build result array
+      // Build result array.
+      // Include lookmarks even when target is missing (event will be null).
       const results: LookmarkedEvent[] = [];
-      
+
       for (const [targetKey, lookmarks] of lookmarksByTarget) {
-        const event = eventMap.get(targetKey);
-        if (event) {
-          const latestLookmarkAt = Math.max(...lookmarks.map(l => l.created_at));
-          results.push({
-            event,
-            lookmarks,
-            latestLookmarkAt,
-          });
-        }
+        const event = eventMap.get(targetKey) ?? null;
+        const latestLookmarkAt = Math.max(...lookmarks.map(l => l.created_at));
+        results.push({
+          event,
+          targetId: targetKey,
+          lookmarks,
+          latestLookmarkAt,
+        });
       }
 
       // Sort by most recent lookmark

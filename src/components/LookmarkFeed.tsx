@@ -49,7 +49,7 @@ export function LookmarkFeed({ pubkey }: LookmarkFeedProps) {
     isFetchingNextPage,
   } = useLookmarks(pubkey);
 
-  // Flatten pages and deduplicate by event ID
+  // Flatten pages and deduplicate by target ID
   const lookmarks = useMemo((): LookmarkedEvent[] => {
     if (!data?.pages) return [];
 
@@ -59,8 +59,8 @@ export function LookmarkFeed({ pubkey }: LookmarkFeedProps) {
     for (const page of data.pages) {
       if (!page?.lookmarkedEvents) continue;
       for (const item of page.lookmarkedEvents) {
-        if (!seen.has(item.event.id)) {
-          seen.add(item.event.id);
+        if (!seen.has(item.targetId)) {
+          seen.add(item.targetId);
           results.push(item);
         }
       }
@@ -150,7 +150,7 @@ export function LookmarkFeed({ pubkey }: LookmarkFeedProps) {
 
       <div className="grid gap-4">
         {lookmarks.map((lookmarkedEvent) => (
-          <LookmarkCard key={lookmarkedEvent.event.id} lookmarkedEvent={lookmarkedEvent} />
+          <LookmarkCard key={lookmarkedEvent.targetId} lookmarkedEvent={lookmarkedEvent} />
         ))}
       </div>
 
