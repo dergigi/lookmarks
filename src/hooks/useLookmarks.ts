@@ -17,6 +17,12 @@ export interface LookmarkedEvent {
   latestLookmarkAt: number;
 }
 
+/** Determines the type of a lookmark event */
+export function getLookmarkType(ev: NostrEvent): 'reaction' | 'reply' | 'quote' {
+  if (ev.kind === 7) return 'reaction';
+  return ev.tags.some(([n]) => n === 'q') ? 'quote' : 'reply';
+}
+
 interface LookmarksPage {
   lookmarkedEvents: LookmarkedEvent[];
   oldestTimestamp: number | undefined;

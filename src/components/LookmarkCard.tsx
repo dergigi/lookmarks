@@ -10,7 +10,7 @@ import { NoteContent } from '@/components/NoteContent';
 import { useAuthor } from '@/hooks/useAuthor';
 import { formatTimestamp } from '@/lib/formatTimestamp';
 import { genUserName } from '@/lib/genUserName';
-import type { LookmarkedEvent } from '@/hooks/useLookmarks';
+import { getLookmarkType, type LookmarkedEvent } from '@/hooks/useLookmarks';
 
 interface LookmarkCardProps {
   lookmarkedEvent: LookmarkedEvent;
@@ -32,11 +32,6 @@ export function LookmarkCard({ lookmarkedEvent }: LookmarkCardProps) {
   const latestLookmarkDisplayName = latestLookmarkAuthor.data?.metadata?.name 
     || (latestLookmark ? genUserName(latestLookmark.pubkey) : '');
   const latestLookmarkNpub = latestLookmark ? nip19.npubEncode(latestLookmark.pubkey) : undefined;
-  
-  const getLookmarkType = (ev: LookmarkedEvent['lookmarks'][number]): 'reaction' | 'reply' | 'quote' => {
-    if (ev.kind === 7) return 'reaction';
-    return ev.tags.some(([n]) => n === 'q') ? 'quote' : 'reply';
-  };
 
   const { reactionCount, replyCount, quoteCount, latestReaction, latestReply, latestQuote } = (() => {
     let reactionCount = 0;

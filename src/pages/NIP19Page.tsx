@@ -15,7 +15,7 @@ import { NoteContent } from '@/components/NoteContent';
 import { useAuthor } from '@/hooks/useAuthor';
 import { useEvent } from '@/hooks/useEvent';
 import { useAddressableEvent } from '@/hooks/useAddressableEvent';
-import { useLookmarks, type LookmarkedEvent } from '@/hooks/useLookmarks';
+import { useLookmarks, getLookmarkType } from '@/hooks/useLookmarks';
 import { genUserName } from '@/lib/genUserName';
 
 export function NIP19Page() {
@@ -99,11 +99,6 @@ function PageShell({ onBack, children }: { onBack: () => void; children: React.R
       </main>
     </div>
   );
-}
-
-function getLookmarkType(ev: LookmarkedEvent['lookmarks'][number]): 'reaction' | 'reply' | 'quote' {
-  if (ev.kind === 7) return 'reaction';
-  return ev.tags.some(([n]) => n === 'q') ? 'quote' : 'reply';
 }
 
 function ProfileLookmarksView({ pubkey }: { pubkey: string }) {
