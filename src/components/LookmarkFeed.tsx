@@ -171,7 +171,7 @@ export function LookmarkFeed({ pubkey }: LookmarkFeedProps) {
             ) : (
               <>
                 <ChevronDown className="h-4 w-4 mr-2" />
-                Load more lookmarks
+                Load more
               </>
             )}
           </Button>
