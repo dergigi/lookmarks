@@ -116,6 +116,7 @@ function ProfileLookmarksView({ pubkey }: { pubkey: string }) {
   const displayName = author.data?.metadata?.name ?? genUserName(pubkey);
   const avatar = author.data?.metadata?.picture;
   const nip05 = author.data?.metadata?.nip05;
+  const npubShort = `${npub.slice(0, 12)}…${npub.slice(-8)}`;
 
   return (
     <div className="space-y-6">
@@ -138,7 +139,7 @@ function ProfileLookmarksView({ pubkey }: { pubkey: string }) {
               {nip05 ? (
                 <div className="text-xs text-muted-foreground truncate">{nip05}</div>
               ) : (
-                <div className="text-xs text-muted-foreground truncate">{npub}</div>
+                <div className="text-xs text-muted-foreground truncate">{npubShort}</div>
               )}
             </div>
 
