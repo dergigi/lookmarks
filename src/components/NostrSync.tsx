@@ -2,7 +2,8 @@ import { useEffect } from 'react';
 import { useNostr } from '@nostrify/react';
 import { useCurrentUser } from '@/hooks/useCurrentUser';
 import { useAppContext } from '@/hooks/useAppContext';
-import { SEARCH_RELAY_URLS } from '@/lib/nostrSearchRelays';
+import { SEARCH_RELAY_URLS, FALLBACK_RELAY_URLS } from '@/lib/nostrSearchRelays';
+import type { RelayConfig } from '@/contexts/AppContext';
 
 /**
  * NostrSync - Syncs user's Nostr data
@@ -31,29 +32,47 @@ export function NostrSync() {
 
           // Only update if the event is newer than our stored data
           if (event.created_at > config.relayMetadata.updatedAt) {
-            const fetchedRelays = event.tags
+            // Parse user's relays from NIP-65, marking them with source: 'user'
+            const userRelays: RelayConfig[] = event.tags
               .filter(([name]) => name === 'r')
-              .map(([_, url, marker]) => ({
+              .map(([, url, marker]) => ({
                 url,
                 read: !marker || marker === 'read',
                 write: !marker || marker === 'write',
+                source: 'user' as const,
               }));
 
-            if (fetchedRelays.length > 0) {
-              // Append search/discovery relays as read-only to ensure lookmark
-              // queries work even when user has an obscure relay list.
-              // NIP-50 relays are essential for content search.
-              const userRelayUrls = new Set(fetchedRelays.map(r => r.url));
-              const searchRelaysToAdd = SEARCH_RELAY_URLS
+            if (userRelays.length > 0) {
+              const userRelayUrls = new Set(userRelays.map(r => r.url));
+
+              // Add search relays (read-only, source: 'search')
+              // These are essential for NIP-50 lookmark discovery
+              const searchRelays: RelayConfig[] = SEARCH_RELAY_URLS
                 .filter(url => !userRelayUrls.has(url))
-                .map(url => ({ url, read: true, write: false }));
+                .map(url => ({ url, read: true, write: false, source: 'search' as const }));
 
-              const mergedRelays = [...fetchedRelays, ...searchRelaysToAdd];
+              // Add fallback relays (read-only, source: 'fallback')
+              // These help resolve targets when user's relays don't have the data
+              const allUrls = new Set([...userRelayUrls, ...SEARCH_RELAY_URLS]);
+              const fallbackRelays: RelayConfig[] = config.relayMetadata.fallbacksDisabled
+                ? []
+                : FALLBACK_RELAY_URLS
+                    .filter(url => !allUrls.has(url))
+                    .map(url => ({ url, read: true, write: false, source: 'fallback' as const }));
 
-              console.log('Syncing relay list from Nostr:', mergedRelays);
+              // Merge: user relays first, then search, then fallback
+              // User relays keep their write permissions; system relays are read-only
+              const mergedRelays = [...userRelays, ...searchRelays, ...fallbackRelays];
+
+              console.log('Syncing relay list from Nostr:', {
+                user: userRelays.length,
+                search: searchRelays.length,
+                fallback: fallbackRelays.length,
+              });
               updateConfig((current) => ({
                 ...current,
                 relayMetadata: {
+                  ...current.relayMetadata,
                   relays: mergedRelays,
                   updatedAt: event.created_at,
                 },

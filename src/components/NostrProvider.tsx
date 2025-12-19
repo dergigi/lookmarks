@@ -49,14 +49,13 @@ const NostrProvider: React.FC<NostrProviderProps> = (props) => {
         return routes;
       },
       eventRouter(_event: NostrEvent) {
-        // Get write relays from metadata
+        // Only write to user's relays (never to search/fallback relays)
+        // For backwards compatibility, relays without source are treated as user relays
         const writeRelays = relayMetadata.current.relays
-          .filter(r => r.write)
+          .filter(r => r.write && (!r.source || r.source === 'user'))
           .map(r => r.url);
 
-        const allRelays = new Set<string>(writeRelays);
-
-        return [...allRelays];
+        return writeRelays;
       },
     });
   }
