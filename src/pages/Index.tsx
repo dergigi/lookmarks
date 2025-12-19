@@ -265,14 +265,17 @@ const Index = () => {
               <span>Lookmarks - A read-only Nostr client</span>
             </div>
             <div className="flex items-center gap-4">
-              <a
-                href="https://shakespeare.diy"
-                target="_blank"
-                rel="noopener noreferrer"
-                className="hover:text-foreground transition-colors"
-              >
-                Vibed with Shakespeare
-              </a>
+              <p className="text-sm text-muted-foreground">
+                Created by{' '}
+                <a
+                  href="https://dergigi.com/nostr/"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="underline hover:text-foreground transition-colors"
+                >
+                  Gigi
+                </a>
+              </p>
             </div>
           </div>
         </div>
