@@ -216,7 +216,7 @@ const Index = () => {
               </span>
             </h2>
             <p className="text-muted-foreground max-w-lg mx-auto">
-              A feed of things that people found interesting enough to throw some eyes on it.
+              A feed of things people found interesting enough to throw some eyes on.
             </p>
           </div>
 
