@@ -116,10 +116,14 @@ export function LookmarkCard({ lookmarkedEvent }: LookmarkCardProps) {
               )}
             </div>
           </div>
-          <div className="flex items-center gap-1 text-xs text-muted-foreground shrink-0">
+          <button
+            onClick={handleOpenNjump}
+            className="flex items-center gap-1 text-xs text-muted-foreground shrink-0 hover:text-foreground transition-colors cursor-pointer"
+            title="Open in njump.to"
+          >
             <Clock className="h-3 w-3" />
             <span>{formatTimestamp(event.created_at)}</span>
-          </div>
+          </button>
         </div>
       </CardHeader>
       
