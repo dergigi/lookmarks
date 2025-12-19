@@ -138,11 +138,29 @@ export function useLookmarks(pubkey?: string) {
       ]);
 
       // Merge search results from all relays that responded.
-      const searchResults = dedupeEvents(
+      let searchResults = dedupeEvents(
         searchSettled
           .filter((r): r is PromiseFulfilledResult<NostrEvent[]> => r.status === 'fulfilled')
           .flatMap((r) => r.value)
       );
+
+      // NIP-01 fallback: if all NIP-50 search relays failed or returned nothing,
+      // query the user's read relays for kind:1 events and filter client-side.
+      // This ensures lookmarks still appear even when search relays are down.
+      if (searchResults.length === 0) {
+        try {
+          const fallbackResults = await nostr.query(
+            [{ kinds: [1], ...authorFilter, ...untilFilter, limit: PAGE_SIZE }],
+            { signal: combinedSignal }
+          );
+          // Filter client-side for events containing 👀
+          searchResults = fallbackResults.filter((event) =>
+            event.content.includes(EYES_EMOJI)
+          );
+        } catch (error) {
+          console.warn('NIP-01 fallback query failed:', error);
+        }
+      }
 
       // Filter search results to referential lookmarks.
       const referentialLookmarks = searchResults.filter((event) => {
