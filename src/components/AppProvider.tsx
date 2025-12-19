@@ -12,13 +12,16 @@ interface AppProviderProps {
 }
 
 // Zod schema for RelayMetadata validation
+// Must include optional fields (source, fallbacksDisabled) to preserve them on rehydration
 const RelayMetadataSchema = z.object({
   relays: z.array(z.object({
     url: z.string().url(),
     read: z.boolean(),
     write: z.boolean(),
+    source: z.enum(['user', 'fallback', 'search']).optional(),
   })),
   updatedAt: z.number(),
+  fallbacksDisabled: z.boolean().optional(),
 }) satisfies z.ZodType<RelayMetadata>;
 
 // Zod schema for AppConfig validation
