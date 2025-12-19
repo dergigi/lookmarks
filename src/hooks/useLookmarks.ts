@@ -81,7 +81,9 @@ export function useLookmarks(pubkey?: string) {
       const searchFilter = {
         kinds: [1] as number[],
         search: EYES_EMOJI,
-        ...authorFilter,
+        // NOTE: many NIP-50 relays behave inconsistently when combining `search`
+        // with other filter fields like `authors`. We fetch broadly here and
+        // apply the author filter client-side below when `pubkey` is provided.
         ...untilFilter,
         limit: PAGE_SIZE,
       };
@@ -96,6 +98,7 @@ export function useLookmarks(pubkey?: string) {
       // 2. Are referential (must have q/e/a tag)
       const referentialLookmarks = searchResults.filter((event) => {
         if (event.kind !== 1) return false;
+        if (pubkey && event.pubkey !== pubkey) return false;
         if (!event.content.includes(EYES_EMOJI)) return false;
         return isReferentialEvent(event);
       });
