@@ -176,17 +176,21 @@ export function useLookmarks(pubkey?: string) {
         }
       }
 
-      // Fetch all referenced events by ID
+      // Fetch all referenced events by ID.
+      // Use the full relay pool (nostr) instead of search relays (searchClient).
+      // NIP-50 search relays index lookmark events but often don't store the
+      // referenced targets. The user's read relays are more likely to have them.
       const referencedEvents: NostrEvent[] = [];
       if (referencedEventIds.size > 0) {
-        const eventsById = await searchClient.query(
+        const eventsById = await nostr.query(
           [{ ids: Array.from(referencedEventIds) }],
           { signal: combinedSignal }
         );
         referencedEvents.push(...eventsById);
       }
 
-      // Fetch all referenced addressable events
+      // Fetch all referenced addressable events.
+      // Same rationale: use full relay pool for better target resolution.
       const addressableQueries = Array.from(referencedAddressables.values()).map((addr) => ({
         kinds: [addr.kind] as number[],
         authors: [addr.pubkey],
@@ -195,7 +199,7 @@ export function useLookmarks(pubkey?: string) {
       }));
 
       if (addressableQueries.length > 0) {
-        const addressableEvents = await searchClient.query(
+        const addressableEvents = await nostr.query(
           addressableQueries,
           { signal: combinedSignal }
         );
