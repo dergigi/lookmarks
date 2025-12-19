@@ -158,11 +158,6 @@ function ProfileLookmarksView({ pubkey }: { pubkey: string }) {
             </div>
           </div>
         </CardHeader>
-        <CardContent className="pt-0">
-          <div className="text-sm text-muted-foreground">
-            Lookmarks by <span className="font-medium text-foreground">@{displayName}</span>
-          </div>
-        </CardContent>
       </Card>
 
       <LookmarkFeed pubkey={pubkey} />
