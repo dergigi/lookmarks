@@ -205,11 +205,11 @@ export function LookmarkCard({ lookmarkedEvent }: LookmarkCardProps) {
               <Button
                 variant="ghost"
                 size="sm"
-                className="h-8 px-2 text-xs"
+                className="h-8 px-1 sm:px-2 text-xs"
                 onClick={handleOpenNjump}
               >
-                <ExternalLink className="h-3.5 w-3.5 mr-1" />
-                njump
+                <ExternalLink className="h-3.5 w-3.5 mr-0 sm:mr-1" />
+                <span className="hidden sm:inline">njump</span>
               </Button>
             </TooltipTrigger>
             <TooltipContent>
@@ -222,11 +222,11 @@ export function LookmarkCard({ lookmarkedEvent }: LookmarkCardProps) {
               <Button
                 variant="ghost"
                 size="sm"
-                className="h-8 px-2 text-xs"
+                className="h-8 px-1 sm:px-2 text-xs"
                 onClick={handleOpenNative}
               >
-                <FontAwesomeIcon icon={faMobileScreen} className="h-3.5 w-3.5 mr-1" />
-                Native
+                <FontAwesomeIcon icon={faMobileScreen} className="h-3.5 w-3.5 mr-0 sm:mr-1" />
+                <span className="hidden sm:inline">Native</span>
               </Button>
             </TooltipTrigger>
             <TooltipContent>
