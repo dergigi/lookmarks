@@ -2,6 +2,7 @@ import { useEffect } from 'react';
 import { useNostr } from '@nostrify/react';
 import { useCurrentUser } from '@/hooks/useCurrentUser';
 import { useAppContext } from '@/hooks/useAppContext';
+import { SEARCH_RELAY_URLS } from '@/lib/nostrSearchRelays';
 
 /**
  * NostrSync - Syncs user's Nostr data
@@ -39,11 +40,21 @@ export function NostrSync() {
               }));
 
             if (fetchedRelays.length > 0) {
-              console.log('Syncing relay list from Nostr:', fetchedRelays);
+              // Append search/discovery relays as read-only to ensure lookmark
+              // queries work even when user has an obscure relay list.
+              // NIP-50 relays are essential for content search.
+              const userRelayUrls = new Set(fetchedRelays.map(r => r.url));
+              const searchRelaysToAdd = SEARCH_RELAY_URLS
+                .filter(url => !userRelayUrls.has(url))
+                .map(url => ({ url, read: true, write: false }));
+
+              const mergedRelays = [...fetchedRelays, ...searchRelaysToAdd];
+
+              console.log('Syncing relay list from Nostr:', mergedRelays);
               updateConfig((current) => ({
                 ...current,
                 relayMetadata: {
-                  relays: fetchedRelays,
+                  relays: mergedRelays,
                   updatedAt: event.created_at,
                 },
               }));
