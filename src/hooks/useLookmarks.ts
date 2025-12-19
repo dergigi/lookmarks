@@ -202,22 +202,35 @@ export function useLookmarks(pubkey?: string) {
         }
       }
 
-      // Collect all referenced targets (event IDs and addressables)
+      // Collect all referenced targets (event IDs and addressables) along with relay hints.
+      // NIP-10 specifies that the third element of 'e'/'q' tags is a relay hint URL.
       const referencedEventIds = new Set<string>();
-      const referencedAddressables = new Map<string, { kind: number; pubkey: string; identifier: string }>();
-      
+      const relayHints = new Map<string, Set<string>>(); // eventId -> Set of relay URLs
+      const referencedAddressables = new Map<string, { kind: number; pubkey: string; identifier: string; relayHint?: string }>();
+
       for (const event of allLookmarkEvents) {
         if (event.kind === 7) {
           // Reactions use 'e' tag
           const eTag = event.tags.find(([name]) => name === 'e');
           if (eTag?.[1]) {
             referencedEventIds.add(eTag[1]);
+            // Collect relay hint if present (third element)
+            if (eTag[2]) {
+              const hints = relayHints.get(eTag[1]) ?? new Set();
+              hints.add(eTag[2]);
+              relayHints.set(eTag[1], hints);
+            }
           }
         } else if (event.kind === 1) {
           // Check for quote ('q' tag) first
           const qTag = event.tags.find(([name]) => name === 'q');
           if (qTag?.[1]) {
             referencedEventIds.add(qTag[1]);
+            if (qTag[2]) {
+              const hints = relayHints.get(qTag[1]) ?? new Set();
+              hints.add(qTag[2]);
+              relayHints.set(qTag[1], hints);
+            }
           } else {
             // Check for addressable reference ('a' tag)
             const aTag = event.tags.find(([name]) => name === 'a');
@@ -225,36 +238,80 @@ export function useLookmarks(pubkey?: string) {
               const parsed = parseAddressableTag(aTag[1]);
               if (parsed) {
                 const key = `${parsed.kind}:${parsed.pubkey}:${parsed.identifier}`;
-                referencedAddressables.set(key, parsed);
+                referencedAddressables.set(key, { ...parsed, relayHint: aTag[2] });
               }
             } else {
               // Otherwise check for reply ('e' tag with reply marker, or last 'e' tag)
               const eTags = event.tags.filter(([name]) => name === 'e');
-              const replyTag = eTags.find(([, , , marker]) => marker === 'reply') 
+              const replyTag = eTags.find(([, , , marker]) => marker === 'reply')
                 || eTags[eTags.length - 1];
               if (replyTag?.[1]) {
                 referencedEventIds.add(replyTag[1]);
+                if (replyTag[2]) {
+                  const hints = relayHints.get(replyTag[1]) ?? new Set();
+                  hints.add(replyTag[2]);
+                  relayHints.set(replyTag[1], hints);
+                }
               }
             }
           }
         }
       }
 
-      // Fetch all referenced events by ID.
-      // Use the full relay pool (nostr) instead of search relays (searchClient).
-      // NIP-50 search relays index lookmark events but often don't store the
-      // referenced targets. The user's read relays are more likely to have them.
+      // Fetch all referenced events by ID from user's read relays first.
       const referencedEvents: NostrEvent[] = [];
+      const foundIds = new Set<string>();
+
       if (referencedEventIds.size > 0) {
         const eventsById = await nostr.query(
           [{ ids: Array.from(referencedEventIds) }],
           { signal: combinedSignal }
         );
-        referencedEvents.push(...eventsById);
+        for (const ev of eventsById) {
+          referencedEvents.push(ev);
+          foundIds.add(ev.id);
+        }
+      }
+
+      // For missing events, try relay hints (NIP-10) and search relays as fallback.
+      const missingIds = Array.from(referencedEventIds).filter(id => !foundIds.has(id));
+
+      if (missingIds.length > 0 && typeof nostr.group === 'function') {
+        // Collect unique hint relays for missing events
+        const hintRelayUrls = new Set<string>();
+        for (const id of missingIds) {
+          const hints = relayHints.get(id);
+          if (hints) {
+            for (const url of hints) hintRelayUrls.add(url);
+          }
+        }
+
+        // Query hint relays and search relays in parallel for missing events
+        const fallbackRelays = [...hintRelayUrls, ...SEARCH_RELAY_URLS];
+        const fallbackPromises = fallbackRelays.map(async (url) => {
+          try {
+            const relay = nostr.group([url]);
+            return await relay.query([{ ids: missingIds }], { signal: combinedSignal });
+          } catch {
+            return [];
+          }
+        });
+
+        const fallbackResults = await Promise.allSettled(fallbackPromises);
+        for (const result of fallbackResults) {
+          if (result.status === 'fulfilled') {
+            for (const ev of result.value) {
+              if (!foundIds.has(ev.id)) {
+                referencedEvents.push(ev);
+                foundIds.add(ev.id);
+              }
+            }
+          }
+        }
       }
 
       // Fetch all referenced addressable events.
-      // Same rationale: use full relay pool for better target resolution.
+      // Try user's relays first, then hint relay if provided.
       const addressableQueries = Array.from(referencedAddressables.values()).map((addr) => ({
         kinds: [addr.kind] as number[],
         authors: [addr.pubkey],
