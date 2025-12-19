@@ -1,18 +1,14 @@
 import { useState } from 'react';
 import { useSeoMeta } from '@unhead/react';
-import { Eye, Search, Globe, User, Info } from 'lucide-react';
+import { Eye, Search, Globe, User } from 'lucide-react';
 import { nip19 } from 'nostr-tools';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import {
-  Tooltip,
-  TooltipContent,
-  TooltipTrigger,
-} from '@/components/ui/tooltip';
 import { LoginArea } from '@/components/auth/LoginArea';
 import { LookmarkFeed } from '@/components/LookmarkFeed';
 import { RelayIndicator } from '@/components/RelayIndicator';
+import { LookmarksInfoDialog } from '@/components/LookmarksInfoDialog';
 import { useCurrentUser } from '@/hooks/useCurrentUser';
 
 function isValidPubkey(input: string): string | null {
@@ -106,20 +102,7 @@ const Index = () => {
 
               <LoginArea className="max-w-60" />
 
-              <Tooltip>
-                <TooltipTrigger asChild>
-                  <Button variant="ghost" size="icon" className="text-muted-foreground shrink-0">
-                    <Info className="h-4 w-4" />
-                  </Button>
-                </TooltipTrigger>
-                <TooltipContent side="left" className="max-w-xs">
-                  <p className="font-medium mb-1">What is Lookmarks?</p>
-                  <p className="text-xs text-muted-foreground">
-                    Shows events that have been marked with 👀 emoji reactions, replies, or quotes.
-                    A way to bookmark interesting content on Nostr! Log in to use your own relays.
-                  </p>
-                </TooltipContent>
-              </Tooltip>
+              <LookmarksInfoDialog />
             </div>
           </div>
         </div>

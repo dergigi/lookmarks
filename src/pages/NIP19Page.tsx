@@ -2,6 +2,8 @@ import { nip19 } from 'nostr-tools';
 import { useNavigate, useParams } from 'react-router-dom';
 import { ArrowLeft, ExternalLink, Loader2 } from 'lucide-react';
 import type { NostrEvent } from '@nostrify/nostrify';
+import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
+import { faMobileScreen } from '@fortawesome/free-solid-svg-icons';
 import NotFound from './NotFound';
 import { LookmarkFeed } from '@/components/LookmarkFeed';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
@@ -131,14 +133,29 @@ function ProfileLookmarksView({ pubkey }: { pubkey: string }) {
               )}
             </div>
 
-            <a
-              href={`nostr:${npub}`}
-              className="text-xs text-muted-foreground hover:text-foreground transition-colors"
-              title="Open in your Nostr client"
-              rel="noopener noreferrer"
-            >
-              nostr:
-            </a>
+            <div className="flex items-center gap-1 shrink-0">
+              <Button
+                variant="ghost"
+                size="sm"
+                className="h-8 w-8 p-0"
+                onClick={() => window.open(`https://njump.to/${npub}`, '_blank', 'noopener,noreferrer')}
+                aria-label="Open profile in njump.to"
+                title="Open profile in njump.to"
+              >
+                <ExternalLink className="h-3.5 w-3.5" />
+              </Button>
+
+              <Button
+                variant="ghost"
+                size="sm"
+                className="h-8 w-8 p-0"
+                onClick={() => window.open(`nostr:${npub}`, '_self')}
+                aria-label="Open profile in your Nostr client"
+                title="Open profile in your Nostr client"
+              >
+                <FontAwesomeIcon icon={faMobileScreen} className="h-3.5 w-3.5" />
+              </Button>
+            </div>
           </div>
         </CardHeader>
         <CardContent className="pt-0">
