@@ -137,26 +137,35 @@ export function LookmarkCard({ lookmarkedEvent }: LookmarkCardProps) {
           {/* Lookmark stats */}
           <div className="flex items-center gap-2 text-xs text-muted-foreground">
             {reactionCount > 0 && (
-              <div className="flex items-center gap-1" title="👀 Reactions">
-                <Eye className="h-3 w-3 text-amber-500" />
+              <div
+                className="inline-flex items-center gap-1 rounded-full border border-border/50 bg-muted/40 px-2 py-1"
+                title="👀 Reactions"
+              >
+                <Eye className="h-3 w-3 text-muted-foreground" />
                 <Heart className="h-3 w-3" />
-                <span>{reactionCount}</span>
+                <span className="font-medium text-foreground">{reactionCount}</span>
               </div>
             )}
             
             {replyCount > 0 && (
-              <div className="flex items-center gap-1" title="👀 Replies">
-                <Eye className="h-3 w-3 text-amber-500" />
+              <div
+                className="inline-flex items-center gap-1 rounded-full border border-border/50 bg-muted/40 px-2 py-1"
+                title="👀 Replies"
+              >
+                <Eye className="h-3 w-3 text-muted-foreground" />
                 <MessageSquare className="h-3 w-3" />
-                <span>{replyCount}</span>
+                <span className="font-medium text-foreground">{replyCount}</span>
               </div>
             )}
             
             {quoteCount > 0 && (
-              <div className="flex items-center gap-1" title="👀 Quotes">
-                <Eye className="h-3 w-3 text-amber-500" />
+              <div
+                className="inline-flex items-center gap-1 rounded-full border border-border/50 bg-muted/40 px-2 py-1"
+                title="👀 Quotes"
+              >
+                <Eye className="h-3 w-3 text-muted-foreground" />
                 <Repeat className="h-3 w-3" />
-                <span>{quoteCount}</span>
+                <span className="font-medium text-foreground">{quoteCount}</span>
               </div>
             )}
           </div>
