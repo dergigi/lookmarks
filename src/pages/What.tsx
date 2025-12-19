@@ -1,6 +1,6 @@
 import { useSeoMeta } from '@unhead/react';
 import { Link } from 'react-router-dom';
-import { ArrowLeft } from 'lucide-react';
+import { ArrowLeft, Eye, Heart, MessageSquare, Repeat } from 'lucide-react';
 
 export default function What() {
   useSeoMeta({
@@ -43,7 +43,13 @@ export default function What() {
 
         <div className="space-y-8 text-muted-foreground">
           <div>
-            <h3 className="text-foreground font-medium mb-2">Reaction</h3>
+            <div className="flex items-center gap-3 mb-2">
+              <span className="inline-flex items-center gap-1 rounded-full border border-border/50 bg-muted/40 px-2 py-1">
+                <Eye className="h-3 w-3 text-muted-foreground" />
+                <Heart className="h-3 w-3" />
+              </span>
+              <h3 className="text-foreground font-medium">Reaction</h3>
+            </div>
             <p className="leading-relaxed">
               The most common type. Someone taps the 👀 emoji as a reaction to a post, like a "like" but specifically meaning "worth a look". Under the hood, this is a{' '}
               <a
@@ -59,7 +65,13 @@ export default function What() {
           </div>
 
           <div>
-            <h3 className="text-foreground font-medium mb-2">Reply</h3>
+            <div className="flex items-center gap-3 mb-2">
+              <span className="inline-flex items-center gap-1 rounded-full border border-border/50 bg-muted/40 px-2 py-1">
+                <Eye className="h-3 w-3 text-muted-foreground" />
+                <MessageSquare className="h-3 w-3" />
+              </span>
+              <h3 className="text-foreground font-medium">Reply</h3>
+            </div>
             <p className="leading-relaxed">
               Someone replies to a post and includes 👀 in their message—usually to highlight the parent post to their followers. This uses{' '}
               <a
@@ -75,7 +87,13 @@ export default function What() {
           </div>
 
           <div>
-            <h3 className="text-foreground font-medium mb-2">Quote</h3>
+            <div className="flex items-center gap-3 mb-2">
+              <span className="inline-flex items-center gap-1 rounded-full border border-border/50 bg-muted/40 px-2 py-1">
+                <Eye className="h-3 w-3 text-muted-foreground" />
+                <Repeat className="h-3 w-3" />
+              </span>
+              <h3 className="text-foreground font-medium">Quote</h3>
+            </div>
             <p className="leading-relaxed">
               Someone writes a new post that embeds another post and adds 👀. This is the "retweet with comment" pattern. Technically a kind 1 note with a{' '}
               <code className="text-xs bg-muted px-1.5 py-0.5 rounded">q</code> tag, as defined in{' '}
