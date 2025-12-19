@@ -103,7 +103,7 @@ const Index = () => {
       : null;
 
   useSeoMeta({
-    title: 'Lookmarks - Find what’s catching people’s eyes',
+    title: 'Lookmarks - Find What’s Catching People’s Eyes',
     description:
       'Find what’s catching people’s eyes on Nostr — events marked with 👀 reactions, replies, or quotes. A read-only client for discovering interesting content.',
   });
@@ -199,10 +199,10 @@ const Index = () => {
         <div className="max-w-4xl mx-auto px-4 py-12 relative w-full">
           <div className="text-center mb-8">
             <h2 className="text-3xl md:text-4xl font-bold mb-3">
-              Find what’s{' '}
+              Find What’s{' '}
               <span className="inline-flex items-center gap-1">
                 <span className="bg-gradient-to-r from-amber-500 to-orange-500 bg-clip-text text-transparent">
-                  catching people’s eyes
+                  Catching People’s Eyes
                 </span>
               </span>
             </h2>
