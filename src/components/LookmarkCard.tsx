@@ -6,7 +6,6 @@ import { Link } from 'react-router-dom';
 import { Card, CardContent, CardFooter, CardHeader } from '@/components/ui/card';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Button } from '@/components/ui/button';
-import { Badge } from '@/components/ui/badge';
 import { NoteContent } from '@/components/NoteContent';
 import { useAuthor } from '@/hooks/useAuthor';
 import { genUserName } from '@/lib/genUserName';
@@ -36,27 +35,6 @@ function formatTimestamp(timestamp: number): string {
   });
 }
 
-function getEventKindLabel(kind: number): string {
-  switch (kind) {
-    case 1: return 'Note';
-    case 30023: return 'Article';
-    case 30024: return 'Draft';
-    case 1063: return 'File';
-    case 1311: return 'Live Chat';
-    case 31922: case 31923: return 'Calendar';
-    case 30402: return 'Listing';
-    default: return `Kind ${kind}`;
-  }
-}
-
-function getKindIcon(kind: number) {
-  switch (kind) {
-    case 1: return MessageSquare;
-    case 30023: case 30024: return MessageSquare;
-    default: return MessageSquare;
-  }
-}
-
 export function LookmarkCard({ lookmarkedEvent }: LookmarkCardProps) {
   const { event, lookmarks, latestLookmarkAt } = lookmarkedEvent;
   const author = useAuthor(event.pubkey);
@@ -79,8 +57,6 @@ export function LookmarkCard({ lookmarkedEvent }: LookmarkCardProps) {
   const replyCount = lookmarks.filter(e => e.kind === 1 && !e.tags.some(([n]) => n === 'q')).length;
   const quoteCount = lookmarks.filter(e => e.kind === 1 && e.tags.some(([n]) => n === 'q')).length;
   
-  const KindIcon = getKindIcon(event.kind);
-
   const handleOpenNjump = () => {
     window.open(`https://njump.to/${nevent}`, '_blank', 'noopener,noreferrer');
   };
@@ -105,10 +81,6 @@ export function LookmarkCard({ lookmarkedEvent }: LookmarkCardProps) {
                 <span className="font-semibold text-foreground truncate max-w-[200px]">
                   {displayName}
                 </span>
-                <Badge variant="secondary" className="text-xs px-1.5 py-0 h-5 shrink-0">
-                  <KindIcon className="h-3 w-3 mr-1" />
-                  {getEventKindLabel(event.kind)}
-                </Badge>
               </div>
               {nip05 && (
                 <span className="text-xs text-muted-foreground truncate block max-w-[250px]">
