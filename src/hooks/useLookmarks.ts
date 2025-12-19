@@ -1,7 +1,13 @@
+import { useEffect, useState } from 'react';
 import { useNostr } from '@nostrify/react';
 import { useInfiniteQuery } from '@tanstack/react-query';
 import type { NostrEvent } from '@nostrify/nostrify';
 import { SEARCH_RELAY_URLS } from '@/lib/nostrSearchRelays';
+import {
+  getCacheKey,
+  getStaleCachedLookmarks,
+  cacheLookmarks,
+} from '@/lib/lookmarksCache';
 
 const EYES_EMOJI = '👀';
 
@@ -78,13 +84,23 @@ function parseAddressableTag(aTag: string): { kind: number; pubkey: string; iden
  * Uses NIP-50 search relays to discover kind:1 events containing 👀,
  * filters to referential-only (must reference another event),
  * and resolves targets including addressable events.
- * 
+ *
  * Uses infinite query for pagination with "Load more" support.
+ * Implements stale-while-revalidate via IndexedDB for instant first paint.
  */
 export function useLookmarks(pubkey?: string) {
   const { nostr } = useNostr();
 
-  return useInfiniteQuery<LookmarksPage>({
+  // Load cached data for instant first paint (stale-while-revalidate)
+  const [cachedFirstPage, setCachedFirstPage] = useState<LookmarkedEvent[] | null>(null);
+  useEffect(() => {
+    const cacheKey = getCacheKey(pubkey);
+    getStaleCachedLookmarks<LookmarkedEvent>(cacheKey).then((result) => {
+      if (result) setCachedFirstPage(result.data);
+    });
+  }, [pubkey]);
+
+  const query = useInfiniteQuery<LookmarksPage>({
     queryKey: ['nostr', 'lookmarks', pubkey ?? 'global'],
     queryFn: async ({ pageParam, signal }) => {
       const timeout = AbortSignal.timeout(QUERY_TIMEOUT);
@@ -329,8 +345,16 @@ export function useLookmarks(pubkey?: string) {
       const hasMorePages = searchResults.length >= PAGE_SIZE ||
         reactionLookmarks.length >= PAGE_SIZE;
 
-      return { 
-        lookmarkedEvents: results, 
+      // Cache first page results for stale-while-revalidate on next visit
+      if (!pageParam && results.length > 0) {
+        const cacheKey = getCacheKey(pubkey);
+        cacheLookmarks(cacheKey, results).catch(() => {
+          // Ignore cache write failures
+        });
+      }
+
+      return {
+        lookmarkedEvents: results,
         oldestTimestamp: hasMorePages && oldestTimestamp ? oldestTimestamp : undefined,
       };
     },
@@ -342,5 +366,14 @@ export function useLookmarks(pubkey?: string) {
     },
     initialPageParam: undefined,
     staleTime: 60000, // 1 minute
+    // Use cached data as placeholder while fetching fresh data
+    placeholderData: cachedFirstPage
+      ? {
+          pages: [{ lookmarkedEvents: cachedFirstPage, oldestTimestamp: undefined }],
+          pageParams: [undefined],
+        }
+      : undefined,
   });
+
+  return query;
 }
