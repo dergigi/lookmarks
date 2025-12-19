@@ -5,7 +5,7 @@ import type { NostrEvent } from '@nostrify/nostrify';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faMobileScreen } from '@fortawesome/free-solid-svg-icons';
 import NotFound from './NotFound';
-import { LookmarkFeed } from '@/components/LookmarkFeed';
+import { LookmarkEventsFeed } from '@/components/LookmarkEventsFeed';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader } from '@/components/ui/card';
@@ -165,7 +165,7 @@ function ProfileLookmarksView({ pubkey }: { pubkey: string }) {
         </CardContent>
       </Card>
 
-      <LookmarkFeed pubkey={pubkey} />
+      <LookmarkEventsFeed pubkey={pubkey} />
     </div>
   );
 }
