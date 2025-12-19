@@ -2,6 +2,7 @@ import { nip19 } from 'nostr-tools';
 import { ExternalLink, Clock, MessageSquare, Heart, Repeat, Eye } from 'lucide-react';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faMobileScreen } from '@fortawesome/free-solid-svg-icons';
+import { Link } from 'react-router-dom';
 import { Card, CardContent, CardFooter, CardHeader } from '@/components/ui/card';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Button } from '@/components/ui/button';
@@ -71,6 +72,7 @@ export function LookmarkCard({ lookmarkedEvent }: LookmarkCardProps) {
   const latestLookmarkAuthor = useAuthor(latestLookmark?.pubkey);
   const latestLookmarkDisplayName = latestLookmarkAuthor.data?.metadata?.name 
     || (latestLookmark ? genUserName(latestLookmark.pubkey) : '');
+  const latestLookmarkNpub = latestLookmark ? nip19.npubEncode(latestLookmark.pubkey) : undefined;
   
   // Count lookmark types
   const reactionCount = lookmarks.filter(e => e.kind === 7).length;
@@ -172,7 +174,20 @@ export function LookmarkCard({ lookmarkedEvent }: LookmarkCardProps) {
           
           {latestLookmark && latestLookmarkDisplayName ? (
             <span className="text-xs text-muted-foreground">
-              Lookmarked by <span className="font-medium text-foreground">@{latestLookmarkDisplayName}</span> {formatTimestamp(latestLookmarkAt)}
+              Lookmarked by{' '}
+              {latestLookmarkNpub ? (
+                <Link
+                  to={`/${latestLookmarkNpub}`}
+                  className="font-medium text-foreground hover:underline"
+                >
+                  @{latestLookmarkDisplayName}
+                </Link>
+              ) : (
+                <span className="font-medium text-foreground">
+                  @{latestLookmarkDisplayName}
+                </span>
+              )}{' '}
+              {formatTimestamp(latestLookmarkAt)}
             </span>
           ) : (
             <span className="text-xs text-muted-foreground">
