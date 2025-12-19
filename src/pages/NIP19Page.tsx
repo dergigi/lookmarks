@@ -1,5 +1,5 @@
 import { nip19 } from 'nostr-tools';
-import { Link, useNavigate, useParams } from 'react-router-dom';
+import { useNavigate, useParams } from 'react-router-dom';
 import { ArrowLeft, ExternalLink, Loader2 } from 'lucide-react';
 import type { NostrEvent } from '@nostrify/nostrify';
 import NotFound from './NotFound';
@@ -35,14 +35,14 @@ export function NIP19Page() {
     case 'npub':
     case 'nprofile':
       return (
-        <PageShell title="Profile" onBack={() => navigate('/')}>
+        <PageShell onBack={() => navigate('/')}>
           <ProfileLookmarksView pubkey={type === 'npub' ? (data as string) : (data as { pubkey: string }).pubkey} />
         </PageShell>
       );
 
     case 'note':
       return (
-        <PageShell title="Note" onBack={() => navigate('/')}>
+        <PageShell onBack={() => navigate('/')}>
           <EventView
             eventId={data as string}
             nip19Id={identifier}
@@ -53,7 +53,7 @@ export function NIP19Page() {
 
     case 'nevent':
       return (
-        <PageShell title="Event" onBack={() => navigate('/')}>
+        <PageShell onBack={() => navigate('/')}>
           <EventView
             eventId={(data as { id: string }).id}
             nip19Id={identifier}
@@ -64,7 +64,7 @@ export function NIP19Page() {
 
     case 'naddr':
       return (
-        <PageShell title="Addressable event" onBack={() => navigate('/')}>
+        <PageShell onBack={() => navigate('/')}>
           <AddressableEventView
             kind={(data as { kind: number }).kind}
             pubkey={(data as { pubkey: string }).pubkey}
@@ -79,26 +79,14 @@ export function NIP19Page() {
   }
 }
 
-function PageShell({ title, onBack, children }: { title: string; onBack: () => void; children: React.ReactNode }) {
+function PageShell({ onBack, children }: { onBack: () => void; children: React.ReactNode }) {
   return (
     <div className="min-h-screen bg-gradient-to-b from-background via-background to-amber-500/5">
       <header className="border-b border-border/40 backdrop-blur-sm bg-background/80 sticky top-0 z-50">
         <div className="max-w-4xl mx-auto px-4 py-4 w-full">
-          <div className="flex items-center justify-between gap-3">
-            <div className="flex items-center gap-3 min-w-0">
-              <Button variant="ghost" size="icon" onClick={onBack} aria-label="Back" title="Back">
-                <ArrowLeft className="h-4 w-4" />
-              </Button>
-              <div className="min-w-0">
-                <div className="text-sm font-medium text-foreground truncate">{title}</div>
-                <div className="text-xs text-muted-foreground truncate">NIP-19</div>
-              </div>
-            </div>
-
-            <Link to="/" className="text-xs text-muted-foreground hover:text-foreground transition-colors">
-              Home
-            </Link>
-          </div>
+          <Button variant="ghost" size="icon" onClick={onBack} aria-label="Back" title="Back">
+            <ArrowLeft className="h-4 w-4" />
+          </Button>
         </div>
       </header>
 
