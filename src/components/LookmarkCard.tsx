@@ -204,19 +204,6 @@ export function LookmarkCard({ lookmarkedEvent }: LookmarkCardProps) {
                   @{latestLookmarkDisplayName}
                 </span>
               )}{' '}
-              <button
-                type="button"
-                onClick={(e) => handleOpenLookmarkNjump(e, latestLookmark)}
-                className="ml-1 inline-flex items-center rounded-full border border-border/50 bg-muted/40 px-2 py-0.5 text-[11px] font-medium text-foreground/90 transition-colors hover:bg-muted/70 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-amber-500/40"
-                title="Open latest lookmark event in njump.to"
-                aria-label="Open latest lookmark event in njump.to"
-              >
-                {getLookmarkType(latestLookmark) === 'reaction'
-                  ? 'Reaction'
-                  : getLookmarkType(latestLookmark) === 'reply'
-                    ? 'Reply'
-                    : 'Quote'}
-              </button>
               {formatTimestamp(latestLookmarkAt)}
             </span>
           ) : (
