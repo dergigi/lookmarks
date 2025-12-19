@@ -1,9 +1,10 @@
-import { Eye, Loader2, AlertCircle, RefreshCw } from 'lucide-react';
+import { useMemo } from 'react';
+import { Eye, Loader2, AlertCircle, RefreshCw, ChevronDown } from 'lucide-react';
 import { Card, CardContent } from '@/components/ui/card';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Button } from '@/components/ui/button';
 import { LookmarkCard } from '@/components/LookmarkCard';
-import { useLookmarks } from '@/hooks/useLookmarks';
+import { useLookmarks, type LookmarkedEvent } from '@/hooks/useLookmarks';
 
 interface LookmarkFeedProps {
   pubkey?: string;
@@ -36,7 +37,39 @@ function LookmarkSkeleton() {
 }
 
 export function LookmarkFeed({ pubkey }: LookmarkFeedProps) {
-  const { data: lookmarks, isLoading, error, refetch, isFetching } = useLookmarks(pubkey);
+  const {
+    data,
+    isLoading,
+    error,
+    refetch,
+    isFetching,
+    fetchNextPage,
+    hasNextPage,
+    isFetchingNextPage,
+  } = useLookmarks(pubkey);
+
+  // Flatten pages and deduplicate by event ID
+  const lookmarks = useMemo((): LookmarkedEvent[] => {
+    if (!data?.pages) return [];
+
+    const seen = new Set<string>();
+    const results: LookmarkedEvent[] = [];
+
+    for (const page of data.pages) {
+      if (!page?.lookmarkedEvents) continue;
+      for (const item of page.lookmarkedEvents) {
+        if (!seen.has(item.event.id)) {
+          seen.add(item.event.id);
+          results.push(item);
+        }
+      }
+    }
+
+    // Sort all results by most recent lookmark
+    results.sort((a, b) => b.latestLookmarkAt - a.latestLookmarkAt);
+
+    return results;
+  }, [data?.pages]);
 
   if (isLoading) {
     return (
@@ -70,7 +103,7 @@ export function LookmarkFeed({ pubkey }: LookmarkFeedProps) {
     );
   }
 
-  if (!lookmarks || lookmarks.length === 0) {
+  if (lookmarks.length === 0) {
     return (
       <Card className="border-dashed border-2 bg-card/30">
         <CardContent className="py-16 px-8 text-center">
@@ -79,7 +112,7 @@ export function LookmarkFeed({ pubkey }: LookmarkFeedProps) {
           </div>
           <h3 className="text-xl font-semibold mb-2">No lookmarks found</h3>
           <p className="text-muted-foreground max-w-sm mx-auto">
-            {pubkey 
+            {pubkey
               ? "This user hasn't lookmarked any events with 👀 yet."
               : "No events with 👀 reactions were found. Try checking your relay connections or come back later."
             }
@@ -93,7 +126,7 @@ export function LookmarkFeed({ pubkey }: LookmarkFeedProps) {
     <div className="space-y-4">
       <div className="flex items-center justify-between">
         <p className="text-sm text-muted-foreground">
-          Found <span className="font-semibold text-foreground">{lookmarks.length}</span> lookmarked events
+          Showing <span className="font-semibold text-foreground">{lookmarks.length}</span> lookmarked events
         </p>
         <Button
           variant="ghost"
@@ -102,7 +135,7 @@ export function LookmarkFeed({ pubkey }: LookmarkFeedProps) {
           disabled={isFetching}
           className="text-xs"
         >
-          {isFetching ? (
+          {isFetching && !isFetchingNextPage ? (
             <Loader2 className="h-3 w-3 mr-1 animate-spin" />
           ) : (
             <RefreshCw className="h-3 w-3 mr-1" />
@@ -110,12 +143,44 @@ export function LookmarkFeed({ pubkey }: LookmarkFeedProps) {
           Refresh
         </Button>
       </div>
-      
+
       <div className="grid gap-4">
         {lookmarks.map((lookmarkedEvent) => (
           <LookmarkCard key={lookmarkedEvent.event.id} lookmarkedEvent={lookmarkedEvent} />
         ))}
       </div>
+
+      {/* Load More Button */}
+      {hasNextPage && (
+        <div className="flex justify-center pt-4">
+          <Button
+            variant="outline"
+            onClick={() => fetchNextPage()}
+            disabled={isFetchingNextPage}
+            className="w-full max-w-xs"
+          >
+            {isFetchingNextPage ? (
+              <>
+                <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                Loading more...
+              </>
+            ) : (
+              <>
+                <ChevronDown className="h-4 w-4 mr-2" />
+                Load more lookmarks
+              </>
+            )}
+          </Button>
+        </div>
+      )}
+
+      {/* End of results indicator */}
+      {!hasNextPage && lookmarks.length > 0 && (
+        <div className="text-center py-6 text-sm text-muted-foreground">
+          <Eye className="h-4 w-4 inline-block mr-1 opacity-50" />
+          You've seen all the lookmarks!
+        </div>
+      )}
     </div>
   );
 }

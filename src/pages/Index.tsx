@@ -12,6 +12,7 @@ import {
 } from '@/components/ui/tooltip';
 import { LoginArea } from '@/components/auth/LoginArea';
 import { LookmarkFeed } from '@/components/LookmarkFeed';
+import { RelayIndicator } from '@/components/RelayIndicator';
 import { useCurrentUser } from '@/hooks/useCurrentUser';
 
 function isValidPubkey(input: string): string | null {
@@ -19,7 +20,7 @@ function isValidPubkey(input: string): string | null {
   if (/^[0-9a-f]{64}$/i.test(input)) {
     return input.toLowerCase();
   }
-  
+
   // Try to decode as npub
   try {
     const decoded = nip19.decode(input);
@@ -32,7 +33,7 @@ function isValidPubkey(input: string): string | null {
   } catch {
     // Not a valid npub/nprofile
   }
-  
+
   return null;
 }
 
@@ -41,7 +42,7 @@ const Index = () => {
   const [searchedPubkey, setSearchedPubkey] = useState<string | undefined>();
   const [activeTab, setActiveTab] = useState<'global' | 'user' | 'mine'>('global');
   const [searchError, setSearchError] = useState<string | null>(null);
-  
+
   const { user } = useCurrentUser();
 
   useSeoMeta({
@@ -54,7 +55,7 @@ const Index = () => {
       setSearchError('Please enter an npub or pubkey');
       return;
     }
-    
+
     const pubkey = isValidPubkey(searchInput.trim());
     if (pubkey) {
       setSearchedPubkey(pubkey);
@@ -99,10 +100,12 @@ const Index = () => {
                 <p className="text-xs text-muted-foreground truncate">Discover what's catching eyes</p>
               </div>
             </div>
-            
+
             <div className="flex items-center gap-2 shrink-0">
+              <RelayIndicator />
+
               <LoginArea className="max-w-60" />
-              
+
               <Tooltip>
                 <TooltipTrigger asChild>
                   <Button variant="ghost" size="icon" className="text-muted-foreground shrink-0">
@@ -112,7 +115,7 @@ const Index = () => {
                 <TooltipContent side="left" className="max-w-xs">
                   <p className="font-medium mb-1">What is Lookmarks?</p>
                   <p className="text-xs text-muted-foreground">
-                    Shows events that have been marked with 👀 emoji reactions, replies, or quotes. 
+                    Shows events that have been marked with 👀 emoji reactions, replies, or quotes.
                     A way to bookmark interesting content on Nostr! Log in to use your own relays.
                   </p>
                 </TooltipContent>
@@ -126,7 +129,7 @@ const Index = () => {
       <section className="relative overflow-hidden">
         <div className="absolute inset-0 bg-gradient-to-r from-amber-500/10 via-orange-500/5 to-rose-500/10 pointer-events-none" />
         <div className="absolute inset-0 bg-[radial-gradient(circle_at_30%_20%,rgba(251,191,36,0.15),transparent_50%)] pointer-events-none" />
-        
+
         <div className="max-w-4xl mx-auto px-4 py-12 relative w-full">
           <div className="text-center mb-8">
             <h2 className="text-3xl md:text-4xl font-bold mb-3">
@@ -158,7 +161,7 @@ const Index = () => {
                   className="pl-10 h-11 bg-background/50 border-border/50 focus:border-amber-500/50 focus:ring-amber-500/20"
                 />
               </div>
-              <Button 
+              <Button
                 onClick={handleSearch}
                 className="h-11 px-6 bg-gradient-to-r from-amber-500 to-orange-500 hover:from-amber-600 hover:to-orange-600 text-white shadow-lg shadow-amber-500/25 shrink-0"
               >
@@ -169,7 +172,7 @@ const Index = () => {
             {searchError && (
               <p className="text-xs text-destructive mt-2 text-center">{searchError}</p>
             )}
-            
+
             {user && (
               <div className="mt-4 text-center">
                 <Button
@@ -204,11 +207,11 @@ const Index = () => {
               <span className="hidden sm:inline">Mine</span>
             </TabsTrigger>
           </TabsList>
-          
+
           <TabsContent value="global" className="mt-0">
             <LookmarkFeed />
           </TabsContent>
-          
+
           <TabsContent value="user" className="mt-0">
             {searchedPubkey ? (
               <LookmarkFeed pubkey={searchedPubkey} />
@@ -219,7 +222,7 @@ const Index = () => {
               </div>
             )}
           </TabsContent>
-          
+
           <TabsContent value="mine" className="mt-0">
             {user ? (
               <LookmarkFeed pubkey={user.pubkey} />
@@ -242,9 +245,9 @@ const Index = () => {
               <span>Lookmarks - A read-only Nostr client</span>
             </div>
             <div className="flex items-center gap-4">
-              <a 
-                href="https://shakespeare.diy" 
-                target="_blank" 
+              <a
+                href="https://shakespeare.diy"
+                target="_blank"
                 rel="noopener noreferrer"
                 className="hover:text-foreground transition-colors"
               >
