@@ -67,6 +67,12 @@ export function LookmarkCard({ lookmarkedEvent }: LookmarkCardProps) {
   const avatar = author.data?.metadata?.picture;
   const nip05 = author.data?.metadata?.nip05;
   
+  // Find the most recent lookmark event
+  const latestLookmark = lookmarks.find(l => l.created_at === latestLookmarkAt) || lookmarks[0];
+  const latestLookmarkAuthor = useAuthor(latestLookmark?.pubkey);
+  const latestLookmarkDisplayName = latestLookmarkAuthor.data?.metadata?.name 
+    || (latestLookmark ? genUserName(latestLookmark.pubkey) : '');
+  
   // Count lookmark types
   const reactionCount = lookmarks.filter(e => e.kind === 7).length;
   const replyCount = lookmarks.filter(e => e.kind === 1 && !e.tags.some(([n]) => n === 'q')).length;
@@ -182,9 +188,15 @@ export function LookmarkCard({ lookmarkedEvent }: LookmarkCardProps) {
             )}
           </div>
           
-          <span className="text-xs text-muted-foreground">
-            Last 👀 {formatTimestamp(latestLookmarkAt)}
-          </span>
+          {latestLookmark && latestLookmarkDisplayName ? (
+            <span className="text-xs text-muted-foreground">
+              👀 by <span className="font-medium text-foreground">@{latestLookmarkDisplayName}</span> {formatTimestamp(latestLookmarkAt)}
+            </span>
+          ) : (
+            <span className="text-xs text-muted-foreground">
+              Last 👀 {formatTimestamp(latestLookmarkAt)}
+            </span>
+          )}
         </div>
         
         <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
