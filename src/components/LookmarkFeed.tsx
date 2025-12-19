@@ -126,7 +126,7 @@ export function LookmarkFeed({ pubkey }: LookmarkFeedProps) {
     <div className="space-y-4">
       <div className="flex items-center justify-between">
         <p className="text-sm text-muted-foreground">
-          Showing <span className="font-semibold text-foreground">{lookmarks.length}</span> lookmarked events
+          Found <span className="font-semibold text-foreground">{lookmarks.length}</span> lookmarks
         </p>
         <Button
           variant="ghost"
