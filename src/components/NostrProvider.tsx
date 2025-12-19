@@ -3,6 +3,7 @@ import { NostrEvent, NostrFilter, NPool, NRelay1 } from '@nostrify/nostrify';
 import { NostrContext } from '@nostrify/react';
 import { useQueryClient } from '@tanstack/react-query';
 import { useAppContext } from '@/hooks/useAppContext';
+import { SEARCH_RELAY_URLS } from '@/lib/nostrSearchRelays';
 
 interface NostrProviderProps {
   children: React.ReactNode;
@@ -59,6 +60,23 @@ const NostrProvider: React.FC<NostrProviderProps> = (props) => {
       },
     });
   }
+
+  // Pre-warm connections to search relays on mount.
+  // This reduces latency for the initial lookmarks query by establishing
+  // WebSocket connections before the feed component mounts.
+  useEffect(() => {
+    if (!pool.current || typeof pool.current.group !== 'function') return;
+
+    // Create a group for each search relay to trigger connection establishment.
+    // The connections are pooled and reused by subsequent queries.
+    for (const url of SEARCH_RELAY_URLS) {
+      try {
+        pool.current.group([url]);
+      } catch {
+        // Ignore connection errors during pre-warm
+      }
+    }
+  }, []);
 
   return (
     <NostrContext.Provider value={{ nostr: pool.current }}>
