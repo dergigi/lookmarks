@@ -110,6 +110,18 @@ export default function What() {
           </div>
         </div>
 
+        <hr className="my-10 border-border" />
+
+        <p className="text-muted-foreground leading-relaxed">
+          You can also view all lookmarks from a specific user by visiting their profile. For example:{' '}
+          <Link
+            to="/npub1dergggklka99wwrs92yz8wdjs952h2ux2ha2ed598ngwu9w7a6fsh9xzpc"
+            className="text-foreground underline underline-offset-2 hover:text-primary transition-colors break-all"
+          >
+            npub1dergggklka99wwrs92yz8wdjs952h2ux2ha2ed598ngwu9w7a6fsh9xzpc
+          </Link>
+        </p>
+
         <p className="text-sm text-muted-foreground mt-10">
           Built on <a href="https://nostr.com" target="_blank" rel="noopener noreferrer" className="underline hover:text-foreground transition-colors">Nostr</a>
         </p>
