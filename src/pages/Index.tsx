@@ -216,7 +216,7 @@ const Index = () => {
               </span>
             </h2>
             <p className="text-muted-foreground max-w-lg mx-auto">
-              A read-only feed of Nostr events people marked with 👀 reactions, replies, or quotes — a lightweight signal something is worth your time.
+              A feed of things that people found interesting enough to throw some eyes on it.
             </p>
           </div>
 
