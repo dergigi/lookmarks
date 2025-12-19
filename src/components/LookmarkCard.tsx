@@ -86,7 +86,7 @@ export function LookmarkCard({ lookmarkedEvent }: LookmarkCardProps) {
     <Card className="group transition-all duration-300 hover:shadow-lg hover:shadow-primary/5 border-border/50 hover:border-border bg-card/50 backdrop-blur-sm overflow-hidden">
       <CardHeader className="pb-3">
         <div className="flex items-start justify-between gap-3">
-          <div className="flex items-center gap-3 min-w-0">
+          <Link to={`/p/${nip19.npubEncode(event.pubkey)}`} className="flex items-center gap-3 min-w-0 group/author">
             <Avatar className="h-10 w-10 ring-2 ring-background shadow-sm shrink-0">
               <AvatarImage src={avatar} alt={displayName} />
               <AvatarFallback className="bg-gradient-to-br from-primary/20 to-primary/10 text-primary font-medium">
@@ -95,7 +95,7 @@ export function LookmarkCard({ lookmarkedEvent }: LookmarkCardProps) {
             </Avatar>
             <div className="min-w-0 flex-1">
               <div className="flex items-center gap-2 flex-wrap">
-                <span className="font-semibold text-foreground truncate max-w-[200px]">
+                <span className="font-semibold text-foreground truncate max-w-[200px] group-hover/author:underline">
                   {displayName}
                 </span>
               </div>
@@ -105,7 +105,7 @@ export function LookmarkCard({ lookmarkedEvent }: LookmarkCardProps) {
                 </span>
               )}
             </div>
-          </div>
+          </Link>
           <button
             onClick={handleOpenNjump}
             className="flex items-center gap-1 text-xs text-muted-foreground shrink-0 hover:text-foreground transition-colors cursor-pointer"
@@ -175,7 +175,7 @@ export function LookmarkCard({ lookmarkedEvent }: LookmarkCardProps) {
               Lookmarked by{' '}
               {latestLookmarkNpub ? (
                 <Link
-                  to={`/${latestLookmarkNpub}`}
+                  to={`/p/${latestLookmarkNpub}`}
                   className="font-medium text-foreground hover:underline"
                 >
                   @{latestLookmarkDisplayName}
