@@ -5,7 +5,16 @@ import { SEARCH_RELAY_URLS } from '@/lib/nostrSearchRelays';
 
 const EYES_EMOJI = '👀';
 const PAGE_SIZE = 100; // Number of lookmark events to fetch per page
-const ENABLE_REACTION_SCAN_FALLBACK = true; // Toggle kind:7 fallback scan
+
+/** Dedupe events by ID, keeping the first occurrence */
+function dedupeEvents(events: NostrEvent[]): NostrEvent[] {
+  const seen = new Set<string>();
+  return events.filter((event) => {
+    if (seen.has(event.id)) return false;
+    seen.add(event.id);
+    return true;
+  });
+}
 
 /** A lookmarked event with metadata about how it was lookmarked */
 export interface LookmarkedEvent {
@@ -80,30 +89,55 @@ export function useLookmarks(pubkey?: string) {
       // Build until filter for pagination
       const untilFilter = pageParam ? { until: pageParam as number } : {};
 
-      // Create search relay client (use group if available, otherwise fallback to main nostr)
-      const searchClient = typeof nostr.group === 'function' 
-        ? nostr.group(SEARCH_RELAY_URLS)
-        : nostr;
-
-      // Query search relays for kind:1 events containing 👀
+      // NIP-50 search filter for kind:1 events containing 👀.
+      // NOTE: many NIP-50 relays behave inconsistently when combining `search`
+      // with other filter fields like `authors`. We fetch broadly here and
+      // apply the author filter client-side below when `pubkey` is provided.
       const searchFilter = {
         kinds: [1] as number[],
         search: EYES_EMOJI,
-        // NOTE: many NIP-50 relays behave inconsistently when combining `search`
-        // with other filter fields like `authors`. We fetch broadly here and
-        // apply the author filter client-side below when `pubkey` is provided.
         ...untilFilter,
         limit: PAGE_SIZE,
       };
 
-      const searchResults = await searchClient.query(
-        [searchFilter],
+      // Query each NIP-50 search relay independently in parallel.
+      // This way if one relay is slow/down, results from others still appear quickly.
+      // Also run kind:7 reaction scan in parallel for maximum coverage.
+      const searchPromises = SEARCH_RELAY_URLS.map(async (url) => {
+        if (typeof nostr.group !== 'function') return [];
+        try {
+          const relay = nostr.group([url]);
+          return await relay.query([searchFilter], { signal: combinedSignal });
+        } catch (error) {
+          console.warn(`Search relay ${url} failed:`, error);
+          return [];
+        }
+      });
+
+      // Kind:7 reaction scan on user's read relays (parallel with search).
+      // This catches 👀 reactions that NIP-50 search might miss.
+      const reactionPromise = nostr.query(
+        [{ kinds: [7], ...authorFilter, ...untilFilter, limit: PAGE_SIZE }],
         { signal: combinedSignal }
+      ).catch((error) => {
+        console.warn('Reaction scan failed:', error);
+        return [] as NostrEvent[];
+      });
+
+      // Wait for all queries to settle, merge successful results.
+      const [searchSettled, reactionResults] = await Promise.all([
+        Promise.allSettled(searchPromises),
+        reactionPromise,
+      ]);
+
+      // Merge search results from all relays that responded.
+      const searchResults = dedupeEvents(
+        searchSettled
+          .filter((r): r is PromiseFulfilledResult<NostrEvent[]> => r.status === 'fulfilled')
+          .flatMap((r) => r.value)
       );
 
-      // Filter to events that:
-      // 1. Contain 👀 in content (defensive check, search results may vary)
-      // 2. Are referential (must have q/e/a tag)
+      // Filter search results to referential lookmarks.
       const referentialLookmarks = searchResults.filter((event) => {
         if (event.kind !== 1) return false;
         if (pubkey && event.pubkey !== pubkey) return false;
@@ -111,26 +145,13 @@ export function useLookmarks(pubkey?: string) {
         return isReferentialEvent(event);
       });
 
-      // Optional: Fallback scan for kind:7 reactions on user's read relays
-      let reactionLookmarks: NostrEvent[] = [];
-      if (ENABLE_REACTION_SCAN_FALLBACK) {
-        try {
-          const reactionResults = await nostr.query(
-            [{ kinds: [7], ...authorFilter, ...untilFilter, limit: PAGE_SIZE }],
-            { signal: combinedSignal }
-          );
-          
-          // Filter to reactions containing 👀
-          reactionLookmarks = reactionResults.filter((event) => {
-            return event.kind === 7 && event.content.includes(EYES_EMOJI);
-          });
-        } catch (error) {
-          console.warn('Reaction fallback scan failed:', error);
-        }
-      }
+      // Filter reactions to those containing 👀.
+      const reactionLookmarks = reactionResults.filter((event) => {
+        return event.kind === 7 && event.content.includes(EYES_EMOJI);
+      });
 
-      // Combine all lookmark events
-      const allLookmarkEvents = [...referentialLookmarks, ...reactionLookmarks];
+      // Combine and dedupe all lookmark events.
+      const allLookmarkEvents = dedupeEvents([...referentialLookmarks, ...reactionLookmarks]);
 
       // Track oldest timestamp for pagination
       let oldestTimestamp: number | undefined;
@@ -278,10 +299,10 @@ export function useLookmarks(pubkey?: string) {
       // Sort by most recent lookmark
       results.sort((a, b) => b.latestLookmarkAt - a.latestLookmarkAt);
 
-      // Determine if there are more pages
-      // We got a full page if we received PAGE_SIZE results from search
-      const hasMorePages = searchResults.length >= PAGE_SIZE || 
-        (ENABLE_REACTION_SCAN_FALLBACK && reactionLookmarks.length >= PAGE_SIZE);
+      // Determine if there are more pages.
+      // We got a full page if either search or reaction scan hit the limit.
+      const hasMorePages = searchResults.length >= PAGE_SIZE ||
+        reactionLookmarks.length >= PAGE_SIZE;
 
       return { 
         lookmarkedEvents: results, 
