@@ -29,7 +29,7 @@ export default function What() {
           </p>
 
           <p>
-            It's a "save this" or "check this out" signal. This app collects those signals and shows you the posts people are pointing at.
+            To me it's a little note that says "save this" or "hey, check this out" or "I'll have a closer look at this later". It's a signal that something is important, or cool, or worth paying attention to. This app collects those signals and shows you the posts people are pointing at.
           </p>
 
           <p>
