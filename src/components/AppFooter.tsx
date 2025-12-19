@@ -1,4 +1,5 @@
 import { Eye, Github } from 'lucide-react';
+import { Link } from 'react-router-dom';
 
 export function AppFooter() {
   return (
@@ -7,7 +8,14 @@ export function AppFooter() {
         <div className="flex flex-col sm:flex-row items-center justify-between gap-4 text-sm text-muted-foreground">
           <div className="flex items-center gap-2">
             <Eye className="h-4 w-4 text-amber-500" />
-            <span>Read-only Nostr client for discovering lookmarks</span>
+            <Link
+              to="/what"
+              className="underline hover:text-foreground transition-colors"
+              aria-label="About Lookmarks"
+              title="About"
+            >
+              About
+            </Link>
           </div>
 
           <div className="flex flex-wrap items-center justify-center gap-x-4 gap-y-2">
