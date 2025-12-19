@@ -3,12 +3,17 @@ import { type NostrEvent } from '@nostrify/nostrify';
 import { Link } from 'react-router-dom';
 import { nip19 } from 'nostr-tools';
 import { useAuthor } from '@/hooks/useAuthor';
+import { useEvent } from '@/hooks/useEvent';
 import { genUserName } from '@/lib/genUserName';
 import { cn } from '@/lib/utils';
+import { Card, CardContent, CardHeader } from '@/components/ui/card';
+import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
+import { Skeleton } from '@/components/ui/skeleton';
 
 interface NoteContentProps {
   event: NostrEvent;
   className?: string;
+  maxQuoteDepth?: number;
 }
 
 // Common image extensions
@@ -37,7 +42,8 @@ function isVideoUrl(url: string): boolean {
 /** Parses content of text note events so that URLs and hashtags are linkified. */
 export function NoteContent({
   event, 
-  className, 
+  className,
+  maxQuoteDepth = 1,
 }: NoteContentProps) {  
   // Process the content to render mentions, links, etc.
   const content = useMemo(() => {
@@ -131,8 +137,41 @@ export function NoteContent({
             parts.push(
               <NostrMention key={`mention-${keyCounter++}`} pubkey={pubkey} />
             );
+          } else if (decoded.type === 'nevent' && maxQuoteDepth > 0) {
+            // Render nevent as embedded quoted event (only if depth allows)
+            const eventId = decoded.data.id;
+            parts.push(
+              <QuotedEvent 
+                key={`quoted-${keyCounter++}`} 
+                eventId={eventId}
+                nevent={nostrId}
+                maxQuoteDepth={maxQuoteDepth - 1}
+              />
+            );
+          } else if (decoded.type === 'note' && maxQuoteDepth > 0) {
+            // Render note1 as embedded quoted event (only if depth allows)
+            const eventId = decoded.data;
+            parts.push(
+              <QuotedEvent 
+                key={`quoted-${keyCounter++}`} 
+                eventId={eventId}
+                nevent={nostrId}
+                maxQuoteDepth={maxQuoteDepth - 1}
+              />
+            );
+          } else if ((decoded.type === 'nevent' || decoded.type === 'note') && maxQuoteDepth === 0) {
+            // Max depth reached, show as link
+            parts.push(
+              <Link 
+                key={`nostr-${keyCounter++}`}
+                to={`/${nostrId}`}
+                className="text-amber-600 dark:text-amber-400 hover:underline break-all"
+              >
+                {fullMatch}
+              </Link>
+            );
           } else {
-            // For other types (note, nevent, naddr), show as a link
+            // For other types (naddr), show as a link
             parts.push(
               <Link 
                 key={`nostr-${keyCounter++}`}
@@ -175,7 +214,7 @@ export function NoteContent({
     }
     
     return parts;
-  }, [event]);
+  }, [event, maxQuoteDepth]);
 
   return (
     <div className={cn("whitespace-pre-wrap break-words overflow-hidden", className)}>
@@ -203,5 +242,87 @@ function NostrMention({ pubkey }: { pubkey: string }) {
     >
       @{displayName}
     </Link>
+  );
+}
+
+// Helper component to display quoted/embedded events
+function QuotedEvent({ 
+  eventId, 
+  nevent,
+  maxQuoteDepth = 0,
+}: { 
+  eventId: string; 
+  nevent: string;
+  maxQuoteDepth?: number;
+}) {
+  const { data: event, isLoading } = useEvent(eventId);
+  const author = useAuthor(event?.pubkey);
+
+  if (isLoading) {
+    return (
+      <Card className="my-3 border-border/50 bg-muted/30">
+        <CardHeader className="pb-3">
+          <div className="flex items-center gap-2">
+            <Skeleton className="h-8 w-8 rounded-full" />
+            <div className="space-y-1 flex-1">
+              <Skeleton className="h-4 w-24" />
+              <Skeleton className="h-3 w-16" />
+            </div>
+          </div>
+        </CardHeader>
+        <CardContent>
+          <Skeleton className="h-4 w-full mb-2" />
+          <Skeleton className="h-4 w-5/6" />
+        </CardContent>
+      </Card>
+    );
+  }
+
+  if (!event) {
+    // Fallback to link if event not found
+    return (
+      <Link 
+        to={`/${nevent}`}
+        className="text-amber-600 dark:text-amber-400 hover:underline break-all inline-block my-2"
+      >
+        {nevent}
+      </Link>
+    );
+  }
+
+  const displayName = author.data?.metadata?.name || genUserName(event.pubkey);
+  const avatar = author.data?.metadata?.picture;
+
+  return (
+    <Card className="my-3 border-border/50 bg-muted/30 hover:bg-muted/50 transition-colors">
+      <CardHeader className="pb-3">
+        <Link 
+          to={`/${nevent}`}
+          className="flex items-center gap-2 hover:opacity-80 transition-opacity"
+        >
+          <Avatar className="h-8 w-8 shrink-0">
+            <AvatarImage src={avatar} alt={displayName} />
+            <AvatarFallback className="bg-gradient-to-br from-primary/20 to-primary/10 text-primary text-xs">
+              {displayName.slice(0, 2).toUpperCase()}
+            </AvatarFallback>
+          </Avatar>
+          <div className="min-w-0 flex-1">
+            <div className="font-medium text-sm truncate">{displayName}</div>
+            <div className="text-xs text-muted-foreground">
+              {new Date(event.created_at * 1000).toLocaleDateString('en-US', {
+                month: 'short',
+                day: 'numeric',
+                year: new Date().getFullYear() !== new Date(event.created_at * 1000).getFullYear() ? 'numeric' : undefined,
+              })}
+            </div>
+          </div>
+        </Link>
+      </CardHeader>
+      <CardContent className="pt-0">
+        <div className="text-sm text-foreground/90 line-clamp-4">
+          <NoteContent event={event} maxQuoteDepth={maxQuoteDepth} />
+        </div>
+      </CardContent>
+    </Card>
   );
 }
