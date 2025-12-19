@@ -21,6 +21,7 @@ const NostrProvider: React.FC<NostrProviderProps> = (props) => {
   const relayMetadata = useRef(config.relayMetadata);
 
   // Invalidate Nostr queries when relay metadata changes
+  // All Nostr data queries use keys starting with ['nostr', ...]
   useEffect(() => {
     relayMetadata.current = config.relayMetadata;
     queryClient.invalidateQueries({ queryKey: ['nostr'] });

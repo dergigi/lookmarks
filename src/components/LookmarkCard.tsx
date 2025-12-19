@@ -1,4 +1,3 @@
-import { type NostrEvent } from '@nostrify/nostrify';
 import { nip19 } from 'nostr-tools';
 import { ExternalLink, Eye, Clock, MessageSquare, Heart, Repeat } from 'lucide-react';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
@@ -62,7 +61,6 @@ export function LookmarkCard({ lookmarkedEvent }: LookmarkCardProps) {
   const { event, lookmarks, latestLookmarkAt } = lookmarkedEvent;
   const author = useAuthor(event.pubkey);
   
-  const npub = nip19.npubEncode(event.pubkey);
   const nevent = nip19.neventEncode({ id: event.id, author: event.pubkey });
   
   const displayName = author.data?.metadata?.name || genUserName(event.pubkey);
