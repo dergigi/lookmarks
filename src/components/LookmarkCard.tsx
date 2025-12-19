@@ -172,7 +172,7 @@ export function LookmarkCard({ lookmarkedEvent }: LookmarkCardProps) {
           
           {latestLookmark && latestLookmarkDisplayName ? (
             <span className="text-xs text-muted-foreground">
-              👀 by <span className="font-medium text-foreground">@{latestLookmarkDisplayName}</span> {formatTimestamp(latestLookmarkAt)}
+              Lookmarked by <span className="font-medium text-foreground">@{latestLookmarkDisplayName}</span> {formatTimestamp(latestLookmarkAt)}
             </span>
           ) : (
             <span className="text-xs text-muted-foreground">
