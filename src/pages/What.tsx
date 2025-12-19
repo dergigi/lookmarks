@@ -25,7 +25,7 @@ export default function What() {
 
         <div className="space-y-6 text-muted-foreground leading-relaxed">
           <p>
-            A Lookmark (👀 + bookmark, get it?) is when someone reacts to a post with <span className="text-2xl align-middle">👀</span>
+            A "lookmark" is when someone reacts to a post with <span className="text-2xl align-middle">👀</span>. It's like a bookmark, but less official.
           </p>
 
           <p>
