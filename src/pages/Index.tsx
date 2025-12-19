@@ -1,7 +1,10 @@
 import { useState } from 'react';
 import { useSeoMeta } from '@unhead/react';
-import { Eye, Search, Globe, User, Info } from 'lucide-react';
+import { Eye, Search, Globe, User } from 'lucide-react';
+import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
+import { faCircleInfo } from '@fortawesome/free-solid-svg-icons';
 import { nip19 } from 'nostr-tools';
+import { Link } from 'react-router-dom';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
@@ -108,8 +111,17 @@ const Index = () => {
 
               <Tooltip>
                 <TooltipTrigger asChild>
-                  <Button variant="ghost" size="icon" className="text-muted-foreground shrink-0">
-                    <Info className="h-4 w-4" />
+                  <Button
+                    asChild
+                    variant="ghost"
+                    size="icon"
+                    className="text-muted-foreground shrink-0"
+                    aria-label="What are Lookmarks?"
+                    title="What are Lookmarks?"
+                  >
+                    <Link to="/what">
+                      <FontAwesomeIcon icon={faCircleInfo} className="h-4 w-4" />
+                    </Link>
                   </Button>
                 </TooltipTrigger>
                 <TooltipContent side="left" className="max-w-xs">
