@@ -52,13 +52,49 @@ export function LookmarkCard({ lookmarkedEvent }: LookmarkCardProps) {
     || (latestLookmark ? genUserName(latestLookmark.pubkey) : '');
   const latestLookmarkNpub = latestLookmark ? nip19.npubEncode(latestLookmark.pubkey) : undefined;
   
-  // Count lookmark types
-  const reactionCount = lookmarks.filter(e => e.kind === 7).length;
-  const replyCount = lookmarks.filter(e => e.kind === 1 && !e.tags.some(([n]) => n === 'q')).length;
-  const quoteCount = lookmarks.filter(e => e.kind === 1 && e.tags.some(([n]) => n === 'q')).length;
+  const getLookmarkType = (ev: LookmarkedEvent['lookmarks'][number]): 'reaction' | 'reply' | 'quote' => {
+    if (ev.kind === 7) return 'reaction';
+    return ev.tags.some(([n]) => n === 'q') ? 'quote' : 'reply';
+  };
+
+  const { reactionCount, replyCount, quoteCount, latestReaction, latestReply, latestQuote } = (() => {
+    let reactionCount = 0;
+    let replyCount = 0;
+    let quoteCount = 0;
+    let latestReaction: LookmarkedEvent['lookmarks'][number] | undefined;
+    let latestReply: LookmarkedEvent['lookmarks'][number] | undefined;
+    let latestQuote: LookmarkedEvent['lookmarks'][number] | undefined;
+
+    for (const lm of lookmarks) {
+      const t = getLookmarkType(lm);
+      if (t === 'reaction') {
+        reactionCount += 1;
+        if (!latestReaction || lm.created_at > latestReaction.created_at) latestReaction = lm;
+      } else if (t === 'reply') {
+        replyCount += 1;
+        if (!latestReply || lm.created_at > latestReply.created_at) latestReply = lm;
+      } else {
+        quoteCount += 1;
+        if (!latestQuote || lm.created_at > latestQuote.created_at) latestQuote = lm;
+      }
+    }
+
+    return { reactionCount, replyCount, quoteCount, latestReaction, latestReply, latestQuote };
+  })();
   
   const handleOpenNjump = () => {
     window.open(`https://njump.to/${nevent}`, '_blank', 'noopener,noreferrer');
+  };
+
+  const handleOpenLookmarkNjump = (
+    e: React.MouseEvent,
+    lookmark: LookmarkedEvent['lookmarks'][number] | undefined
+  ) => {
+    e.preventDefault();
+    e.stopPropagation();
+    if (!lookmark) return;
+    const lookmarkNevent = nip19.neventEncode({ id: lookmark.id, author: lookmark.pubkey });
+    window.open(`https://njump.to/${lookmarkNevent}`, '_blank', 'noopener,noreferrer');
   };
 
   const handleOpenNative = () => {
@@ -111,36 +147,45 @@ export function LookmarkCard({ lookmarkedEvent }: LookmarkCardProps) {
           {/* Lookmark stats */}
           <div className="flex items-center gap-2 text-xs text-muted-foreground">
             {reactionCount > 0 && (
-              <div
-                className="inline-flex items-center gap-1 rounded-full border border-border/50 bg-muted/40 px-2 py-1"
-                title="👀 Reactions"
+              <button
+                type="button"
+                onClick={(e) => handleOpenLookmarkNjump(e, latestReaction)}
+                className="inline-flex items-center gap-1 rounded-full border border-border/50 bg-muted/40 px-2 py-1 transition-colors hover:bg-muted/70 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-amber-500/40"
+                title="Open most recent 👀 reaction lookmark in njump.to"
+                aria-label="Open most recent reaction lookmark in njump.to"
               >
                 <Eye className="h-3 w-3 text-muted-foreground" />
                 <Heart className="h-3 w-3" />
                 <span className="font-medium text-foreground">{reactionCount}</span>
-              </div>
+              </button>
             )}
             
             {replyCount > 0 && (
-              <div
-                className="inline-flex items-center gap-1 rounded-full border border-border/50 bg-muted/40 px-2 py-1"
-                title="👀 Replies"
+              <button
+                type="button"
+                onClick={(e) => handleOpenLookmarkNjump(e, latestReply)}
+                className="inline-flex items-center gap-1 rounded-full border border-border/50 bg-muted/40 px-2 py-1 transition-colors hover:bg-muted/70 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-amber-500/40"
+                title="Open most recent 👀 reply lookmark in njump.to"
+                aria-label="Open most recent reply lookmark in njump.to"
               >
                 <Eye className="h-3 w-3 text-muted-foreground" />
                 <MessageSquare className="h-3 w-3" />
                 <span className="font-medium text-foreground">{replyCount}</span>
-              </div>
+              </button>
             )}
             
             {quoteCount > 0 && (
-              <div
-                className="inline-flex items-center gap-1 rounded-full border border-border/50 bg-muted/40 px-2 py-1"
-                title="👀 Quotes"
+              <button
+                type="button"
+                onClick={(e) => handleOpenLookmarkNjump(e, latestQuote)}
+                className="inline-flex items-center gap-1 rounded-full border border-border/50 bg-muted/40 px-2 py-1 transition-colors hover:bg-muted/70 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-amber-500/40"
+                title="Open most recent 👀 quote lookmark in njump.to"
+                aria-label="Open most recent quote lookmark in njump.to"
               >
                 <Eye className="h-3 w-3 text-muted-foreground" />
                 <Repeat className="h-3 w-3" />
                 <span className="font-medium text-foreground">{quoteCount}</span>
-              </div>
+              </button>
             )}
           </div>
           
@@ -159,6 +204,19 @@ export function LookmarkCard({ lookmarkedEvent }: LookmarkCardProps) {
                   @{latestLookmarkDisplayName}
                 </span>
               )}{' '}
+              <button
+                type="button"
+                onClick={(e) => handleOpenLookmarkNjump(e, latestLookmark)}
+                className="ml-1 inline-flex items-center rounded-full border border-border/50 bg-muted/40 px-2 py-0.5 text-[11px] font-medium text-foreground/90 transition-colors hover:bg-muted/70 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-amber-500/40"
+                title="Open latest lookmark event in njump.to"
+                aria-label="Open latest lookmark event in njump.to"
+              >
+                {getLookmarkType(latestLookmark) === 'reaction'
+                  ? 'Reaction'
+                  : getLookmarkType(latestLookmark) === 'reply'
+                    ? 'Reply'
+                    : 'Quote'}
+              </button>
               {formatTimestamp(latestLookmarkAt)}
             </span>
           ) : (
