@@ -6,7 +6,6 @@ import { Card, CardContent, CardFooter, CardHeader } from '@/components/ui/card'
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
 import { NoteContent } from '@/components/NoteContent';
 import { useAuthor } from '@/hooks/useAuthor';
 import { genUserName } from '@/lib/genUserName';
@@ -138,48 +137,27 @@ export function LookmarkCard({ lookmarkedEvent }: LookmarkCardProps) {
           {/* Lookmark stats */}
           <div className="flex items-center gap-2 text-xs text-muted-foreground">
             {reactionCount > 0 && (
-              <Tooltip>
-                <TooltipTrigger asChild>
-                  <div className="flex items-center gap-1">
-                    <Eye className="h-3 w-3 text-amber-500" />
-                    <Heart className="h-3 w-3" />
-                    <span>{reactionCount}</span>
-                  </div>
-                </TooltipTrigger>
-                <TooltipContent>
-                  <p>👀 Reactions</p>
-                </TooltipContent>
-              </Tooltip>
+              <div className="flex items-center gap-1" title="👀 Reactions">
+                <Eye className="h-3 w-3 text-amber-500" />
+                <Heart className="h-3 w-3" />
+                <span>{reactionCount}</span>
+              </div>
             )}
             
             {replyCount > 0 && (
-              <Tooltip>
-                <TooltipTrigger asChild>
-                  <div className="flex items-center gap-1">
-                    <Eye className="h-3 w-3 text-amber-500" />
-                    <MessageSquare className="h-3 w-3" />
-                    <span>{replyCount}</span>
-                  </div>
-                </TooltipTrigger>
-                <TooltipContent>
-                  <p>👀 Replies</p>
-                </TooltipContent>
-              </Tooltip>
+              <div className="flex items-center gap-1" title="👀 Replies">
+                <Eye className="h-3 w-3 text-amber-500" />
+                <MessageSquare className="h-3 w-3" />
+                <span>{replyCount}</span>
+              </div>
             )}
             
             {quoteCount > 0 && (
-              <Tooltip>
-                <TooltipTrigger asChild>
-                  <div className="flex items-center gap-1">
-                    <Eye className="h-3 w-3 text-amber-500" />
-                    <Repeat className="h-3 w-3" />
-                    <span>{quoteCount}</span>
-                  </div>
-                </TooltipTrigger>
-                <TooltipContent>
-                  <p>👀 Quotes</p>
-                </TooltipContent>
-              </Tooltip>
+              <div className="flex items-center gap-1" title="👀 Quotes">
+                <Eye className="h-3 w-3 text-amber-500" />
+                <Repeat className="h-3 w-3" />
+                <span>{quoteCount}</span>
+              </div>
             )}
           </div>
           
@@ -195,39 +173,29 @@ export function LookmarkCard({ lookmarkedEvent }: LookmarkCardProps) {
         </div>
         
         <div className="flex items-center gap-1">
-          <Tooltip>
-            <TooltipTrigger asChild>
-              <Button
-                variant="ghost"
-                size="sm"
-                className="h-8 px-1 sm:px-2 text-xs"
-                onClick={handleOpenNjump}
-              >
-                <ExternalLink className="h-3.5 w-3.5 mr-0 sm:mr-1" />
-                <span className="hidden sm:inline">njump</span>
-              </Button>
-            </TooltipTrigger>
-            <TooltipContent>
-              <p>Open in njump.to</p>
-            </TooltipContent>
-          </Tooltip>
+          <Button
+            variant="ghost"
+            size="sm"
+            className="h-8 px-1 sm:px-2 text-xs"
+            onClick={handleOpenNjump}
+            aria-label="Open in njump.to"
+            title="Open in njump.to"
+          >
+            <ExternalLink className="h-3.5 w-3.5 mr-0 sm:mr-1" />
+            <span className="hidden sm:inline">njump</span>
+          </Button>
           
-          <Tooltip>
-            <TooltipTrigger asChild>
-              <Button
-                variant="ghost"
-                size="sm"
-                className="h-8 px-1 sm:px-2 text-xs"
-                onClick={handleOpenNative}
-              >
-                <FontAwesomeIcon icon={faMobileScreen} className="h-3.5 w-3.5 mr-0 sm:mr-1" />
-                <span className="hidden sm:inline">Native</span>
-              </Button>
-            </TooltipTrigger>
-            <TooltipContent>
-              <p>Open in your Nostr client</p>
-            </TooltipContent>
-          </Tooltip>
+          <Button
+            variant="ghost"
+            size="sm"
+            className="h-8 px-1 sm:px-2 text-xs"
+            onClick={handleOpenNative}
+            aria-label="Open in your Nostr client"
+            title="Open in your Nostr client"
+          >
+            <FontAwesomeIcon icon={faMobileScreen} className="h-3.5 w-3.5 mr-0 sm:mr-1" />
+            <span className="hidden sm:inline">Native</span>
+          </Button>
         </div>
       </CardFooter>
     </Card>
