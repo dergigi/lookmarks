@@ -1,7 +1,9 @@
 // NOTE: This file is stable and usually should not be modified.
 // It is important that all functionality in this file is preserved, and should only be modified if explicitly requested.
 
-import { ChevronDown, LogOut, UserIcon } from 'lucide-react';
+import { ChevronDown, Eye, LogOut, UserIcon } from 'lucide-react';
+import { nip19 } from 'nostr-tools';
+import { Link } from 'react-router-dom';
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -21,6 +23,8 @@ export function AccountSwitcher() {
   const getDisplayName = (account: Account): string => {
     return account.metadata.name ?? genUserName(account.pubkey);
   }
+
+  const myLookmarksPath = `/p/${nip19.npubEncode(currentUser.pubkey)}`;
 
   return (
     <DropdownMenu modal={false}>
@@ -54,6 +58,13 @@ export function AccountSwitcher() {
             {user.id === currentUser.id && <div className='w-2 h-2 rounded-full bg-primary'></div>}
           </DropdownMenuItem>
         ))}
+        <DropdownMenuSeparator />
+        <DropdownMenuItem asChild className='cursor-pointer p-2 rounded-md'>
+          <Link to={myLookmarksPath} className="flex items-center gap-2">
+            <Eye className="w-4 h-4" />
+            <span>View my lookmarks</span>
+          </Link>
+        </DropdownMenuItem>
         <DropdownMenuSeparator />
         <DropdownMenuItem
           onClick={() => removeLogin(currentUser.id)}

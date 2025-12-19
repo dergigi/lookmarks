@@ -14,7 +14,6 @@ import {
 } from '@/components/ui/tooltip';
 import { LoginArea } from '@/components/auth/LoginArea';
 import { LookmarkFeed } from '@/components/LookmarkFeed';
-import { useCurrentUser } from '@/hooks/useCurrentUser';
 import { useLookmarks } from '@/hooks/useLookmarks';
 
 function isValidPubkey(input: string): string | null {
@@ -46,7 +45,6 @@ const Index = () => {
   const [placeholderIndex, setPlaceholderIndex] = useState(0);
   const navigate = useNavigate();
 
-  const { user } = useCurrentUser();
   const globalLookmarks = useLookmarks();
 
   const recentLookmarkerNpubs = useMemo((): string[] => {
@@ -249,19 +247,6 @@ const Index = () => {
               <p className="text-xs text-destructive mt-2 text-center">{searchError}</p>
             )}
 
-            {user && (
-              <div className="mt-4 text-center">
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={() => navigate(`/p/${nip19.npubEncode(user.pubkey)}`)}
-                  className="text-xs"
-                >
-                  <Eye className="h-3 w-3 mr-1" />
-                  View my lookmarks
-                </Button>
-              </div>
-            )}
           </div>
         </div>
       </section>
