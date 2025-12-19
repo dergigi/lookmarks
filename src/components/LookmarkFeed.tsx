@@ -1,11 +1,19 @@
 import { useMemo } from 'react';
-import { Eye, Loader2, AlertCircle, RefreshCw, ChevronDown } from 'lucide-react';
+import { Eye, Loader2, AlertCircle, RefreshCw, ChevronDown, WifiOff, Clock } from 'lucide-react';
 import { Card, CardContent } from '@/components/ui/card';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Button } from '@/components/ui/button';
 import { LookmarkCard } from '@/components/LookmarkCard';
 import { ConnectedRelaysPill } from '@/components/ConnectedRelaysPill';
 import { useLookmarks, type LookmarkedEvent } from '@/hooks/useLookmarks';
+
+/** Determines if an error is a timeout error */
+function isTimeoutError(error: unknown): boolean {
+  if (error instanceof DOMException && error.name === 'TimeoutError') return true;
+  if (error instanceof DOMException && error.name === 'AbortError') return true;
+  if (error instanceof Error && error.message.includes('timeout')) return true;
+  return false;
+}
 
 interface LookmarkFeedProps {
   pubkey?: string;
@@ -87,6 +95,48 @@ export function LookmarkFeed({ pubkey }: LookmarkFeedProps) {
   }
 
   if (error) {
+    const isOffline = typeof navigator !== 'undefined' && !navigator.onLine;
+    const isTimeout = isTimeoutError(error);
+
+    // Offline state
+    if (isOffline) {
+      return (
+        <Card className="border-yellow-500/50 bg-yellow-500/5">
+          <CardContent className="py-12 px-8 text-center">
+            <WifiOff className="h-12 w-12 mx-auto text-yellow-600 mb-4" />
+            <h3 className="text-lg font-medium text-yellow-700 dark:text-yellow-500 mb-2">You're offline</h3>
+            <p className="text-sm text-muted-foreground mb-4">
+              Check your internet connection and try again.
+            </p>
+            <Button variant="outline" onClick={() => refetch()}>
+              <RefreshCw className="h-4 w-4 mr-2" />
+              Try Again
+            </Button>
+          </CardContent>
+        </Card>
+      );
+    }
+
+    // Timeout state
+    if (isTimeout) {
+      return (
+        <Card className="border-orange-500/50 bg-orange-500/5">
+          <CardContent className="py-12 px-8 text-center">
+            <Clock className="h-12 w-12 mx-auto text-orange-500 mb-4" />
+            <h3 className="text-lg font-medium text-orange-700 dark:text-orange-400 mb-2">Relays took too long</h3>
+            <p className="text-sm text-muted-foreground mb-4">
+              Your relays didn't respond in time. They may be slow or temporarily unavailable.
+            </p>
+            <Button variant="outline" onClick={() => refetch()}>
+              <RefreshCw className="h-4 w-4 mr-2" />
+              Try Again
+            </Button>
+          </CardContent>
+        </Card>
+      );
+    }
+
+    // Generic error state
     return (
       <Card className="border-destructive/50 bg-destructive/5">
         <CardContent className="py-12 px-8 text-center">
