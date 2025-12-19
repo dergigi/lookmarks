@@ -39,22 +39,58 @@ export default function What() {
 
         <hr className="my-10 border-border" />
 
-        <h2 className="text-lg font-semibold mb-4">Three types</h2>
+        <h2 className="text-lg font-semibold mb-6">Three types</h2>
 
-        <ul className="space-y-4 text-muted-foreground">
-          <li className="flex gap-3">
-            <span className="text-foreground font-medium shrink-0">Reaction</span>
-            <span>— Someone tapped 👀 on a post</span>
-          </li>
-          <li className="flex gap-3">
-            <span className="text-foreground font-medium shrink-0">Reply</span>
-            <span>— Someone replied with 👀 in their message</span>
-          </li>
-          <li className="flex gap-3">
-            <span className="text-foreground font-medium shrink-0">Quote</span>
-            <span>— Someone quoted a post and added 👀</span>
-          </li>
-        </ul>
+        <div className="space-y-8 text-muted-foreground">
+          <div>
+            <h3 className="text-foreground font-medium mb-2">Reaction</h3>
+            <p className="leading-relaxed">
+              The most common type. Someone taps the 👀 emoji as a reaction to a post, like a "like" but specifically meaning "worth a look". Under the hood, this is a{' '}
+              <a
+                href="https://github.com/nostr-protocol/nips/blob/master/25.md"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="text-foreground underline underline-offset-2 hover:text-primary transition-colors"
+              >
+                NIP-25
+              </a>{' '}
+              reaction event (kind 7) with 👀 as the content.
+            </p>
+          </div>
+
+          <div>
+            <h3 className="text-foreground font-medium mb-2">Reply</h3>
+            <p className="leading-relaxed">
+              Someone replies to a post and includes 👀 in their message—usually to highlight the parent post to their followers. This uses{' '}
+              <a
+                href="https://github.com/nostr-protocol/nips/blob/master/10.md"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="text-foreground underline underline-offset-2 hover:text-primary transition-colors"
+              >
+                NIP-10
+              </a>{' '}
+              threading: a kind 1 note with an <code className="text-xs bg-muted px-1.5 py-0.5 rounded">e</code> tag pointing to the original.
+            </p>
+          </div>
+
+          <div>
+            <h3 className="text-foreground font-medium mb-2">Quote</h3>
+            <p className="leading-relaxed">
+              Someone writes a new post that embeds another post and adds 👀. This is the "retweet with comment" pattern. Technically a kind 1 note with a{' '}
+              <code className="text-xs bg-muted px-1.5 py-0.5 rounded">q</code> tag, as defined in{' '}
+              <a
+                href="https://github.com/nostr-protocol/nips/blob/master/18.md"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="text-foreground underline underline-offset-2 hover:text-primary transition-colors"
+              >
+                NIP-18
+              </a>
+              .
+            </p>
+          </div>
+        </div>
 
         <p className="text-sm text-muted-foreground mt-10">
           Built on <a href="https://nostr.com" target="_blank" rel="noopener noreferrer" className="underline hover:text-foreground transition-colors">Nostr</a>
