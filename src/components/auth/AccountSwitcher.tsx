@@ -62,7 +62,7 @@ export function AccountSwitcher() {
         <DropdownMenuItem asChild className='cursor-pointer p-2 rounded-md'>
           <Link to={myLookmarksPath} className="flex items-center gap-2">
             <Eye className="w-4 h-4" />
-            <span>View my lookmarks</span>
+            <span>My Lookmarks</span>
           </Link>
         </DropdownMenuItem>
         <DropdownMenuSeparator />
