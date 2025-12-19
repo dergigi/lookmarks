@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from 'react';
 import { useSeoMeta } from '@unhead/react';
-import { Eye, Search } from 'lucide-react';
+import { Eye, Github, Search } from 'lucide-react';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faCircleInfo } from '@fortawesome/free-solid-svg-icons';
 import { nip19 } from 'nostr-tools';
@@ -262,9 +262,20 @@ const Index = () => {
           <div className="flex flex-col sm:flex-row items-center justify-between gap-4 text-sm text-muted-foreground">
             <div className="flex items-center gap-2">
               <Eye className="h-4 w-4 text-amber-500" />
-              <span>Lookmarks - A read-only Nostr client</span>
+              <span>Read-only Nostr client for discovering lookmarks</span>
             </div>
             <div className="flex items-center gap-4">
+              <a
+                href="https://github.com/dergigi/lookmarks"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="inline-flex items-center gap-2 underline hover:text-foreground transition-colors"
+                aria-label="Lookmarks on GitHub"
+                title="Lookmarks on GitHub"
+              >
+                <Github className="h-4 w-4" />
+                <span>GitHub</span>
+              </a>
               <p className="text-sm text-muted-foreground">
                 Created by{' '}
                 <a
