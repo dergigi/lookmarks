@@ -191,7 +191,7 @@ function ProfileLookmarksView({ pubkey }: { pubkey: string }) {
 
           {/* Lookmark stats pills */}
           {hasStats && (
-            <div className="flex items-center gap-2 mt-3">
+            <div className="flex items-center gap-2 mt-3 justify-end">
               {reactionCount > 0 && (
                 <span className="inline-flex items-center gap-1 rounded-full border border-border/50 bg-muted/40 px-2 py-1 text-xs">
                   <Eye className="h-3 w-3 text-muted-foreground" />
