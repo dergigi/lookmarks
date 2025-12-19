@@ -31,6 +31,17 @@ export function AppFooter() {
               <span>GitHub</span>
             </a>
 
+            <a
+              href="https://ants.sh/"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="underline hover:text-foreground transition-colors"
+              aria-label="ants.sh"
+              title="ants.sh"
+            >
+              ants.sh
+            </a>
+
             <span className="text-sm text-muted-foreground">
               Prototyped with{' '}
               <a
