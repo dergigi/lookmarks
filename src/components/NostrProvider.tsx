@@ -67,14 +67,49 @@ const NostrProvider: React.FC<NostrProviderProps> = (props) => {
   useEffect(() => {
     if (!pool.current || typeof pool.current.group !== 'function') return;
 
+    // Track failed relays to avoid repeated connection storms.
+    // Uses sessionStorage so failures reset on new browser sessions.
+    const FAILED_RELAYS_KEY = 'lookmarks:failed-prewarm-relays';
+    const FAILURE_TTL_MS = 5 * 60 * 1000; // 5 minute backoff
+
+    let failedRelays: Record<string, number> = {};
+    try {
+      const stored = sessionStorage.getItem(FAILED_RELAYS_KEY);
+      if (stored) failedRelays = JSON.parse(stored);
+    } catch {
+      // Ignore parse errors
+    }
+
+    const now = Date.now();
+    const updatedFailures: Record<string, number> = {};
+
     // Create a group for each search relay to trigger connection establishment.
-    // The connections are pooled and reused by subsequent queries.
+    // Skip relays that failed recently to avoid reconnect storms.
     for (const url of SEARCH_RELAY_URLS) {
+      const lastFailure = failedRelays[url];
+      if (lastFailure && now - lastFailure < FAILURE_TTL_MS) {
+        // Skip this relay - still in backoff period
+        updatedFailures[url] = lastFailure;
+        continue;
+      }
+
       try {
         pool.current.group([url]);
       } catch {
-        // Ignore connection errors during pre-warm
+        // Mark relay as failed for backoff
+        updatedFailures[url] = now;
       }
+    }
+
+    // Persist updated failure tracking
+    try {
+      if (Object.keys(updatedFailures).length > 0) {
+        sessionStorage.setItem(FAILED_RELAYS_KEY, JSON.stringify(updatedFailures));
+      } else {
+        sessionStorage.removeItem(FAILED_RELAYS_KEY);
+      }
+    } catch {
+      // Ignore storage errors
     }
   }, []);
 
