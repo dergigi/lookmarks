@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { useSeoMeta } from '@unhead/react';
 import { Eye, Search, Globe, User } from 'lucide-react';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
@@ -17,6 +17,7 @@ import { LoginArea } from '@/components/auth/LoginArea';
 import { LookmarkFeed } from '@/components/LookmarkFeed';
 import { RelayIndicator } from '@/components/RelayIndicator';
 import { useCurrentUser } from '@/hooks/useCurrentUser';
+import { useLookmarks } from '@/hooks/useLookmarks';
 
 function isValidPubkey(input: string): string | null {
   // Check if it's already a hex pubkey
@@ -45,8 +46,61 @@ const Index = () => {
   const [searchedPubkey, setSearchedPubkey] = useState<string | undefined>();
   const [activeTab, setActiveTab] = useState<'global' | 'user' | 'mine'>('global');
   const [searchError, setSearchError] = useState<string | null>(null);
+  const [isSearchFocused, setIsSearchFocused] = useState(false);
+  const [placeholderIndex, setPlaceholderIndex] = useState(0);
 
   const { user } = useCurrentUser();
+  const globalLookmarks = useLookmarks();
+
+  const recentLookmarkerNpubs = useMemo((): string[] => {
+    const firstPage = globalLookmarks.data?.pages?.[0]?.lookmarkedEvents;
+    if (!firstPage?.length) return [];
+
+    const lookmarkEvents = firstPage.flatMap((item) => item.lookmarks);
+    lookmarkEvents.sort((a, b) => b.created_at - a.created_at);
+
+    const seen = new Set<string>();
+    const npubs: string[] = [];
+
+    for (const ev of lookmarkEvents) {
+      if (!ev.pubkey || seen.has(ev.pubkey)) continue;
+      seen.add(ev.pubkey);
+
+      try {
+        npubs.push(nip19.npubEncode(ev.pubkey));
+      } catch {
+        // ignore invalid pubkeys
+      }
+
+      if (npubs.length >= 8) break;
+    }
+
+    return npubs;
+  }, [globalLookmarks.data?.pages]);
+
+  useEffect(() => {
+    setPlaceholderIndex(0);
+  }, [recentLookmarkerNpubs]);
+
+  useEffect(() => {
+    const shouldRotate =
+      !isSearchFocused &&
+      searchInput.trim().length === 0 &&
+      recentLookmarkerNpubs.length > 1;
+
+    if (!shouldRotate) return;
+
+    const id = window.setInterval(() => {
+      setPlaceholderIndex((prev) => (prev + 1) % recentLookmarkerNpubs.length);
+    }, 2500);
+
+    return () => window.clearInterval(id);
+  }, [isSearchFocused, recentLookmarkerNpubs.length, searchInput]);
+
+  const placeholderText =
+    recentLookmarkerNpubs.length > 0
+      ? `Try: ${recentLookmarkerNpubs[placeholderIndex % recentLookmarkerNpubs.length]}`
+      : 'Enter npub or pubkey to see their lookmarks...';
 
   useSeoMeta({
     title: 'Lookmarks - Discover 👀 Reactions on Nostr',
@@ -163,12 +217,14 @@ const Index = () => {
                 <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
                 <Input
                   type="text"
-                  placeholder="Enter npub or pubkey to see their lookmarks..."
+                  placeholder={placeholderText}
                   value={searchInput}
                   onChange={(e) => {
                     setSearchInput(e.target.value);
                     setSearchError(null);
                   }}
+                  onFocus={() => setIsSearchFocused(true)}
+                  onBlur={() => setIsSearchFocused(false)}
                   onKeyDown={handleKeyDown}
                   className="pl-10 h-11 bg-background/50 border-border/50 focus:border-amber-500/50 focus:ring-amber-500/20"
                 />
