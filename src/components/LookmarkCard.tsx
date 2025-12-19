@@ -1,6 +1,8 @@
 import { type NostrEvent } from '@nostrify/nostrify';
 import { nip19 } from 'nostr-tools';
 import { ExternalLink, Eye, Clock, MessageSquare, Heart, Repeat } from 'lucide-react';
+import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
+import { faMobileScreen } from '@fortawesome/free-solid-svg-icons';
 import { Card, CardContent, CardFooter, CardHeader } from '@/components/ui/card';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Button } from '@/components/ui/button';
@@ -75,7 +77,7 @@ export function LookmarkCard({ lookmarkedEvent }: LookmarkCardProps) {
   const KindIcon = getKindIcon(event.kind);
 
   const handleOpenNjump = () => {
-    window.open(`https://njump.me/${nevent}`, '_blank', 'noopener,noreferrer');
+    window.open(`https://njump.to/${nevent}`, '_blank', 'noopener,noreferrer');
   };
 
   const handleOpenNative = () => {
@@ -83,19 +85,19 @@ export function LookmarkCard({ lookmarkedEvent }: LookmarkCardProps) {
   };
 
   return (
-    <Card className="group transition-all duration-300 hover:shadow-lg hover:shadow-primary/5 border-border/50 hover:border-border bg-card/50 backdrop-blur-sm">
+    <Card className="group transition-all duration-300 hover:shadow-lg hover:shadow-primary/5 border-border/50 hover:border-border bg-card/50 backdrop-blur-sm overflow-hidden">
       <CardHeader className="pb-3">
         <div className="flex items-start justify-between gap-3">
           <div className="flex items-center gap-3 min-w-0">
-            <Avatar className="h-10 w-10 ring-2 ring-background shadow-sm">
+            <Avatar className="h-10 w-10 ring-2 ring-background shadow-sm shrink-0">
               <AvatarImage src={avatar} alt={displayName} />
               <AvatarFallback className="bg-gradient-to-br from-primary/20 to-primary/10 text-primary font-medium">
                 {displayName.slice(0, 2).toUpperCase()}
               </AvatarFallback>
             </Avatar>
             <div className="min-w-0 flex-1">
-              <div className="flex items-center gap-2">
-                <span className="font-semibold text-foreground truncate">
+              <div className="flex items-center gap-2 flex-wrap">
+                <span className="font-semibold text-foreground truncate max-w-[200px]">
                   {displayName}
                 </span>
                 <Badge variant="secondary" className="text-xs px-1.5 py-0 h-5 shrink-0">
@@ -104,7 +106,7 @@ export function LookmarkCard({ lookmarkedEvent }: LookmarkCardProps) {
                 </Badge>
               </div>
               {nip05 && (
-                <span className="text-xs text-muted-foreground truncate block">
+                <span className="text-xs text-muted-foreground truncate block max-w-[250px]">
                   {nip05}
                 </span>
               )}
@@ -118,13 +120,13 @@ export function LookmarkCard({ lookmarkedEvent }: LookmarkCardProps) {
       </CardHeader>
       
       <CardContent className="pb-3">
-        <div className="text-sm text-foreground/90 line-clamp-6">
-          <NoteContent event={event} />
+        <div className="text-sm text-foreground/90">
+          <NoteContent event={event} className="line-clamp-[12]" />
         </div>
       </CardContent>
       
-      <CardFooter className="pt-0 flex items-center justify-between border-t border-border/30 mt-2 pt-3">
-        <div className="flex items-center gap-3">
+      <CardFooter className="pt-0 flex items-center justify-between border-t border-border/30 mt-2 pt-3 flex-wrap gap-2">
+        <div className="flex items-center gap-3 flex-wrap">
           {/* Lookmark stats */}
           <div className="flex items-center gap-2 text-xs text-muted-foreground">
             <Tooltip>
@@ -201,7 +203,7 @@ export function LookmarkCard({ lookmarkedEvent }: LookmarkCardProps) {
               </Button>
             </TooltipTrigger>
             <TooltipContent>
-              <p>Open in njump.me</p>
+              <p>Open in njump.to</p>
             </TooltipContent>
           </Tooltip>
           
@@ -213,7 +215,7 @@ export function LookmarkCard({ lookmarkedEvent }: LookmarkCardProps) {
                 className="h-8 px-2 text-xs"
                 onClick={handleOpenNative}
               >
-                <ExternalLink className="h-3.5 w-3.5 mr-1" />
+                <FontAwesomeIcon icon={faMobileScreen} className="h-3.5 w-3.5 mr-1" />
                 Native
               </Button>
             </TooltipTrigger>

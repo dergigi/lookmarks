@@ -11,6 +11,9 @@
   },
   "dependencies": {
     "@fontsource-variable/inter": "^5.2.6",
+    "@fortawesome/fontawesome-svg-core": "^7.1.0",
+    "@fortawesome/free-solid-svg-icons": "^7.1.0",
+    "@fortawesome/react-fontawesome": "^3.1.1",
     "@getalby/sdk": "^5.1.1",
     "@hookform/resolvers": "^3.9.0",
     "@nostrify/nostrify": "^0.47.1",

@@ -11,6 +11,29 @@ interface NoteContentProps {
   className?: string;
 }
 
+// Common image extensions
+const IMAGE_EXTENSIONS = /\.(jpg|jpeg|png|gif|webp|svg|avif)(\?.*)?$/i;
+// Common video extensions
+const VIDEO_EXTENSIONS = /\.(mp4|webm|mov|m4v|ogv)(\?.*)?$/i;
+
+function isImageUrl(url: string): boolean {
+  try {
+    const urlObj = new URL(url);
+    return IMAGE_EXTENSIONS.test(urlObj.pathname);
+  } catch {
+    return false;
+  }
+}
+
+function isVideoUrl(url: string): boolean {
+  try {
+    const urlObj = new URL(url);
+    return VIDEO_EXTENSIONS.test(urlObj.pathname);
+  } catch {
+    return false;
+  }
+}
+
 /** Parses content of text note events so that URLs and hashtags are linkified. */
 export function NoteContent({
   event, 
@@ -21,7 +44,7 @@ export function NoteContent({
     const text = event.content;
     
     // Regex to find URLs, Nostr references, and hashtags
-    const regex = /(https?:\/\/[^\s]+)|nostr:(npub1|note1|nprofile1|nevent1)([023456789acdefghjklmnpqrstuvwxyz]+)|(#\w+)/g;
+    const regex = /(https?:\/\/[^\s]+)|nostr:(npub1|note1|nprofile1|nevent1|naddr1)([023456789acdefghjklmnpqrstuvwxyz]+)|(#\w+)/g;
     
     const parts: React.ReactNode[] = [];
     let lastIndex = 0;
@@ -38,18 +61,60 @@ export function NoteContent({
       }
       
       if (url) {
-        // Handle URLs
-        parts.push(
-          <a 
-            key={`url-${keyCounter++}`}
-            href={url}
-            target="_blank"
-            rel="noopener noreferrer"
-            className="text-blue-500 hover:underline"
-          >
-            {url}
-          </a>
-        );
+        // Clean URL (remove trailing punctuation that might have been captured)
+        const cleanUrl = url.replace(/[.,;:!?)]+$/, '');
+        
+        // Check if it's an image
+        if (isImageUrl(cleanUrl)) {
+          parts.push(
+            <a
+              key={`img-link-${keyCounter++}`}
+              href={cleanUrl}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="block my-2"
+            >
+              <img
+                src={cleanUrl}
+                alt=""
+                className="max-w-full h-auto rounded-lg max-h-96 object-contain"
+                loading="lazy"
+              />
+            </a>
+          );
+        }
+        // Check if it's a video
+        else if (isVideoUrl(cleanUrl)) {
+          parts.push(
+            <video
+              key={`video-${keyCounter++}`}
+              src={cleanUrl}
+              controls
+              className="max-w-full h-auto rounded-lg my-2 max-h-96"
+              preload="metadata"
+            />
+          );
+        }
+        // Regular URL
+        else {
+          parts.push(
+            <a 
+              key={`url-${keyCounter++}`}
+              href={cleanUrl}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="text-amber-600 dark:text-amber-400 hover:underline break-all"
+            >
+              {cleanUrl}
+            </a>
+          );
+        }
+        
+        // Add back any trailing punctuation that was removed
+        const trailingChars = url.slice(cleanUrl.length);
+        if (trailingChars) {
+          parts.push(trailingChars);
+        }
       } else if (nostrPrefix && nostrData) {
         // Handle Nostr references
         try {
@@ -61,13 +126,18 @@ export function NoteContent({
             parts.push(
               <NostrMention key={`mention-${keyCounter++}`} pubkey={pubkey} />
             );
+          } else if (decoded.type === 'nprofile') {
+            const pubkey = decoded.data.pubkey;
+            parts.push(
+              <NostrMention key={`mention-${keyCounter++}`} pubkey={pubkey} />
+            );
           } else {
-            // For other types, just show as a link
+            // For other types (note, nevent, naddr), show as a link
             parts.push(
               <Link 
                 key={`nostr-${keyCounter++}`}
                 to={`/${nostrId}`}
-                className="text-blue-500 hover:underline"
+                className="text-amber-600 dark:text-amber-400 hover:underline break-all"
               >
                 {fullMatch}
               </Link>
@@ -84,7 +154,7 @@ export function NoteContent({
           <Link 
             key={`hashtag-${keyCounter++}`}
             to={`/t/${tag}`}
-            className="text-blue-500 hover:underline"
+            className="text-amber-600 dark:text-amber-400 hover:underline"
           >
             {hashtag}
           </Link>
@@ -108,7 +178,7 @@ export function NoteContent({
   }, [event]);
 
   return (
-    <div className={cn("whitespace-pre-wrap break-words", className)}>
+    <div className={cn("whitespace-pre-wrap break-words overflow-hidden", className)}>
       {content.length > 0 ? content : event.content}
     </div>
   );
@@ -127,8 +197,8 @@ function NostrMention({ pubkey }: { pubkey: string }) {
       className={cn(
         "font-medium hover:underline",
         hasRealName 
-          ? "text-blue-500" 
-          : "text-gray-500 hover:text-gray-700"
+          ? "text-amber-600 dark:text-amber-400" 
+          : "text-muted-foreground hover:text-foreground"
       )}
     >
       @{displayName}

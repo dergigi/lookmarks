@@ -10,7 +10,9 @@ import {
   TooltipContent,
   TooltipTrigger,
 } from '@/components/ui/tooltip';
+import { LoginArea } from '@/components/auth/LoginArea';
 import { LookmarkFeed } from '@/components/LookmarkFeed';
+import { useCurrentUser } from '@/hooks/useCurrentUser';
 
 function isValidPubkey(input: string): string | null {
   // Check if it's already a hex pubkey
@@ -37,8 +39,10 @@ function isValidPubkey(input: string): string | null {
 const Index = () => {
   const [searchInput, setSearchInput] = useState('');
   const [searchedPubkey, setSearchedPubkey] = useState<string | undefined>();
-  const [activeTab, setActiveTab] = useState<'global' | 'user'>('global');
+  const [activeTab, setActiveTab] = useState<'global' | 'user' | 'mine'>('global');
   const [searchError, setSearchError] = useState<string | null>(null);
+  
+  const { user } = useCurrentUser();
 
   useSeoMeta({
     title: 'Lookmarks - Discover 👀 Reactions on Nostr',
@@ -67,14 +71,20 @@ const Index = () => {
     }
   };
 
+  const handleViewMyLookmarks = () => {
+    if (user) {
+      setActiveTab('mine');
+    }
+  };
+
   return (
-    <div className="min-h-screen bg-gradient-to-b from-background via-background to-amber-500/5">
+    <div className="min-h-screen bg-gradient-to-b from-background via-background to-amber-500/5 flex flex-col">
       {/* Header */}
       <header className="border-b border-border/40 backdrop-blur-sm bg-background/80 sticky top-0 z-50">
-        <div className="max-w-4xl mx-auto px-4 py-4">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-3">
-              <div className="relative">
+        <div className="max-w-4xl mx-auto px-4 py-4 w-full">
+          <div className="flex items-center justify-between gap-4">
+            <div className="flex items-center gap-3 min-w-0">
+              <div className="relative shrink-0">
                 <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-amber-400 to-orange-500 flex items-center justify-center shadow-lg shadow-amber-500/25">
                   <Eye className="h-5 w-5 text-white" />
                 </div>
@@ -82,28 +92,32 @@ const Index = () => {
                   👀
                 </div>
               </div>
-              <div>
+              <div className="min-w-0">
                 <h1 className="text-xl font-bold bg-gradient-to-r from-amber-500 to-orange-500 bg-clip-text text-transparent">
                   Lookmarks
                 </h1>
-                <p className="text-xs text-muted-foreground">Discover what's catching eyes</p>
+                <p className="text-xs text-muted-foreground truncate">Discover what's catching eyes</p>
               </div>
             </div>
             
-            <Tooltip>
-              <TooltipTrigger asChild>
-                <Button variant="ghost" size="icon" className="text-muted-foreground">
-                  <Info className="h-4 w-4" />
-                </Button>
-              </TooltipTrigger>
-              <TooltipContent side="left" className="max-w-xs">
-                <p className="font-medium mb-1">What is Lookmarks?</p>
-                <p className="text-xs text-muted-foreground">
-                  Shows events that have been marked with 👀 emoji reactions, replies, or quotes. 
-                  A way to bookmark interesting content on Nostr!
-                </p>
-              </TooltipContent>
-            </Tooltip>
+            <div className="flex items-center gap-2 shrink-0">
+              <LoginArea className="max-w-60" />
+              
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <Button variant="ghost" size="icon" className="text-muted-foreground shrink-0">
+                    <Info className="h-4 w-4" />
+                  </Button>
+                </TooltipTrigger>
+                <TooltipContent side="left" className="max-w-xs">
+                  <p className="font-medium mb-1">What is Lookmarks?</p>
+                  <p className="text-xs text-muted-foreground">
+                    Shows events that have been marked with 👀 emoji reactions, replies, or quotes. 
+                    A way to bookmark interesting content on Nostr! Log in to use your own relays.
+                  </p>
+                </TooltipContent>
+              </Tooltip>
+            </div>
           </div>
         </div>
       </header>
@@ -113,7 +127,7 @@ const Index = () => {
         <div className="absolute inset-0 bg-gradient-to-r from-amber-500/10 via-orange-500/5 to-rose-500/10 pointer-events-none" />
         <div className="absolute inset-0 bg-[radial-gradient(circle_at_30%_20%,rgba(251,191,36,0.15),transparent_50%)] pointer-events-none" />
         
-        <div className="max-w-4xl mx-auto px-4 py-12 relative">
+        <div className="max-w-4xl mx-auto px-4 py-12 relative w-full">
           <div className="text-center mb-8">
             <h2 className="text-3xl md:text-4xl font-bold mb-3">
               Find what's worth a{' '}
@@ -130,7 +144,7 @@ const Index = () => {
           {/* Search */}
           <div className="max-w-xl mx-auto">
             <div className="flex gap-2">
-              <div className="relative flex-1">
+              <div className="relative flex-1 min-w-0">
                 <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
                 <Input
                   type="text"
@@ -146,7 +160,7 @@ const Index = () => {
               </div>
               <Button 
                 onClick={handleSearch}
-                className="h-11 px-6 bg-gradient-to-r from-amber-500 to-orange-500 hover:from-amber-600 hover:to-orange-600 text-white shadow-lg shadow-amber-500/25"
+                className="h-11 px-6 bg-gradient-to-r from-amber-500 to-orange-500 hover:from-amber-600 hover:to-orange-600 text-white shadow-lg shadow-amber-500/25 shrink-0"
               >
                 <Eye className="h-4 w-4 mr-2" />
                 Look
@@ -155,21 +169,39 @@ const Index = () => {
             {searchError && (
               <p className="text-xs text-destructive mt-2 text-center">{searchError}</p>
             )}
+            
+            {user && (
+              <div className="mt-4 text-center">
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={handleViewMyLookmarks}
+                  className="text-xs"
+                >
+                  <Eye className="h-3 w-3 mr-1" />
+                  View my lookmarks
+                </Button>
+              </div>
+            )}
           </div>
         </div>
       </section>
 
       {/* Main Content */}
-      <main className="max-w-4xl mx-auto px-4 py-8">
-        <Tabs value={activeTab} onValueChange={(v) => setActiveTab(v as 'global' | 'user')}>
-          <TabsList className="w-full max-w-xs mx-auto grid grid-cols-2 mb-8">
+      <main className="max-w-4xl mx-auto px-4 py-8 flex-1 w-full">
+        <Tabs value={activeTab} onValueChange={(v) => setActiveTab(v as 'global' | 'user' | 'mine')}>
+          <TabsList className="w-full max-w-md mx-auto grid grid-cols-3 mb-8">
             <TabsTrigger value="global" className="flex items-center gap-2">
               <Globe className="h-4 w-4" />
-              Global
+              <span className="hidden sm:inline">Global</span>
             </TabsTrigger>
             <TabsTrigger value="user" className="flex items-center gap-2" disabled={!searchedPubkey}>
               <User className="h-4 w-4" />
-              User
+              <span className="hidden sm:inline">User</span>
+            </TabsTrigger>
+            <TabsTrigger value="mine" className="flex items-center gap-2" disabled={!user}>
+              <Eye className="h-4 w-4" />
+              <span className="hidden sm:inline">Mine</span>
             </TabsTrigger>
           </TabsList>
           
@@ -187,12 +219,23 @@ const Index = () => {
               </div>
             )}
           </TabsContent>
+          
+          <TabsContent value="mine" className="mt-0">
+            {user ? (
+              <LookmarkFeed pubkey={user.pubkey} />
+            ) : (
+              <div className="text-center py-12 text-muted-foreground">
+                <Eye className="h-12 w-12 mx-auto mb-4 opacity-50" />
+                <p>Log in to see your own lookmarks</p>
+              </div>
+            )}
+          </TabsContent>
         </Tabs>
       </main>
 
       {/* Footer */}
       <footer className="border-t border-border/40 mt-auto">
-        <div className="max-w-4xl mx-auto px-4 py-6">
+        <div className="max-w-4xl mx-auto px-4 py-6 w-full">
           <div className="flex flex-col sm:flex-row items-center justify-between gap-4 text-sm text-muted-foreground">
             <div className="flex items-center gap-2">
               <Eye className="h-4 w-4 text-amber-500" />
