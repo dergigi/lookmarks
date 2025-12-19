@@ -1,6 +1,6 @@
 import { nip19 } from 'nostr-tools';
 import { useNavigate, useParams } from 'react-router-dom';
-import { ArrowLeft, ExternalLink, Loader2 } from 'lucide-react';
+import { ArrowLeft, ExternalLink, Loader2, Eye, Heart, MessageSquare, Repeat } from 'lucide-react';
 import type { NostrEvent } from '@nostrify/nostrify';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faMobileScreen } from '@fortawesome/free-solid-svg-icons';
@@ -14,6 +14,7 @@ import { NoteContent } from '@/components/NoteContent';
 import { useAuthor } from '@/hooks/useAuthor';
 import { useEvent } from '@/hooks/useEvent';
 import { useAddressableEvent } from '@/hooks/useAddressableEvent';
+import { useLookmarks, type LookmarkedEvent } from '@/hooks/useLookmarks';
 import { genUserName } from '@/lib/genUserName';
 
 export function NIP19Page() {
@@ -99,14 +100,41 @@ function PageShell({ onBack, children }: { onBack: () => void; children: React.R
   );
 }
 
+function getLookmarkType(ev: LookmarkedEvent['lookmarks'][number]): 'reaction' | 'reply' | 'quote' {
+  if (ev.kind === 7) return 'reaction';
+  return ev.tags.some(([n]) => n === 'q') ? 'quote' : 'reply';
+}
+
 function ProfileLookmarksView({ pubkey }: { pubkey: string }) {
   const npub = nip19.npubEncode(pubkey);
   const author = useAuthor(pubkey);
+  const lookmarksQuery = useLookmarks(pubkey);
 
   const displayName = author.data?.metadata?.name ?? genUserName(pubkey);
   const avatar = author.data?.metadata?.picture;
   const nip05 = author.data?.metadata?.nip05;
   const npubShort = `${npub.slice(0, 12)}…${npub.slice(-8)}`;
+
+  // Calculate totals across all pages
+  const { reactionCount, replyCount, quoteCount } = (() => {
+    let reactionCount = 0;
+    let replyCount = 0;
+    let quoteCount = 0;
+
+    const allEvents = lookmarksQuery.data?.pages.flatMap(p => p.lookmarkedEvents) ?? [];
+    for (const lookmarkedEvent of allEvents) {
+      for (const lm of lookmarkedEvent.lookmarks) {
+        const t = getLookmarkType(lm);
+        if (t === 'reaction') reactionCount += 1;
+        else if (t === 'reply') replyCount += 1;
+        else quoteCount += 1;
+      }
+    }
+
+    return { reactionCount, replyCount, quoteCount };
+  })();
+
+  const hasStats = reactionCount > 0 || replyCount > 0 || quoteCount > 0;
 
   return (
     <div className="space-y-6">
@@ -160,6 +188,33 @@ function ProfileLookmarksView({ pubkey }: { pubkey: string }) {
               </Button>
             </div>
           </div>
+
+          {/* Lookmark stats pills */}
+          {hasStats && (
+            <div className="flex items-center gap-2 mt-3 ml-[6.5rem]">
+              {reactionCount > 0 && (
+                <span className="inline-flex items-center gap-1 rounded-full border border-border/50 bg-muted/40 px-2 py-1 text-xs">
+                  <Eye className="h-3 w-3 text-muted-foreground" />
+                  <Heart className="h-3 w-3" />
+                  <span className="font-medium text-foreground">{reactionCount}</span>
+                </span>
+              )}
+              {replyCount > 0 && (
+                <span className="inline-flex items-center gap-1 rounded-full border border-border/50 bg-muted/40 px-2 py-1 text-xs">
+                  <Eye className="h-3 w-3 text-muted-foreground" />
+                  <MessageSquare className="h-3 w-3" />
+                  <span className="font-medium text-foreground">{replyCount}</span>
+                </span>
+              )}
+              {quoteCount > 0 && (
+                <span className="inline-flex items-center gap-1 rounded-full border border-border/50 bg-muted/40 px-2 py-1 text-xs">
+                  <Eye className="h-3 w-3 text-muted-foreground" />
+                  <Repeat className="h-3 w-3" />
+                  <span className="font-medium text-foreground">{quoteCount}</span>
+                </span>
+              )}
+            </div>
+          )}
         </CardHeader>
       </Card>
 
