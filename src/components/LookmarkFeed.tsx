@@ -4,8 +4,8 @@ import { Card, CardContent } from '@/components/ui/card';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Button } from '@/components/ui/button';
 import { LookmarkCard } from '@/components/LookmarkCard';
+import { ConnectedRelaysPill } from '@/components/ConnectedRelaysPill';
 import { useLookmarks, type LookmarkedEvent } from '@/hooks/useLookmarks';
-import { useAppContext } from '@/hooks/useAppContext';
 
 interface LookmarkFeedProps {
   pubkey?: string;
@@ -38,9 +38,6 @@ function LookmarkSkeleton() {
 }
 
 export function LookmarkFeed({ pubkey }: LookmarkFeedProps) {
-  const { config } = useAppContext();
-  const readRelayCount = config.relayMetadata.relays.filter(r => r.read).length;
-
   const {
     data,
     isLoading,
@@ -133,10 +130,7 @@ export function LookmarkFeed({ pubkey }: LookmarkFeedProps) {
           Found{' '}
           <span className="font-semibold text-foreground">{lookmarks.length}</span>
           {' '}
-          lookmarks across{' '}
-          <span className="font-semibold text-foreground">{readRelayCount}</span>
-          {' '}
-          {readRelayCount === 1 ? 'relay' : 'relays'}
+          lookmarks across <ConnectedRelaysPill className="align-middle" />
         </p>
         <Button
           variant="ghost"
