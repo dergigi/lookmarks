@@ -99,7 +99,7 @@ const Index = () => {
 
   const placeholderText =
     recentLookmarkerNpubs.length > 0
-      ? `Try: ${recentLookmarkerNpubs[placeholderIndex % recentLookmarkerNpubs.length]}`
+      ? recentLookmarkerNpubs[placeholderIndex % recentLookmarkerNpubs.length]
       : 'Enter npub or pubkey to see their lookmarks...';
 
   useSeoMeta({
