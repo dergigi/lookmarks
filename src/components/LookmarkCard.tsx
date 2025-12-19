@@ -247,15 +247,24 @@ function MissingTargetCard({ targetId, lookmarks, latestLookmarkAt }: MissingTar
     || (latestLookmark ? genUserName(latestLookmark.pubkey) : '');
   const latestLookmarkNpub = latestLookmark ? nip19.npubEncode(latestLookmark.pubkey) : undefined;
 
-  // Try to create a link to njump for the target.
-  // If targetId looks like an event ID (64 hex chars), encode as nevent.
-  // If it looks like an addressable (kind:pubkey:d), encode as naddr.
-  const njumpUrl = (() => {
+  // Determine target type and create appropriate njump URL.
+  // Wrap encoding in try/catch for safety against malformed input.
+  const { isAddressable, kindLabel, displayId, njumpUrl } = (() => {
     // Event ID: 64 hex characters
     if (/^[a-f0-9]{64}$/i.test(targetId)) {
-      const nevent = nip19.neventEncode({ id: targetId });
-      return `https://njump.to/${nevent}`;
+      try {
+        const nevent = nip19.neventEncode({ id: targetId });
+        return {
+          isAddressable: false,
+          kindLabel: null,
+          displayId: `${targetId.slice(0, 8)}...${targetId.slice(-8)}`,
+          njumpUrl: `https://njump.to/${nevent}`,
+        };
+      } catch {
+        return { isAddressable: false, kindLabel: null, displayId: targetId.slice(0, 16), njumpUrl: null };
+      }
     }
+
     // Addressable: kind:pubkey:identifier
     const parts = targetId.split(':');
     if (parts.length === 3) {
@@ -263,11 +272,36 @@ function MissingTargetCard({ targetId, lookmarks, latestLookmarkAt }: MissingTar
       const pubkey = parts[1];
       const identifier = parts[2];
       if (!isNaN(kind) && /^[a-f0-9]{64}$/i.test(pubkey)) {
-        const naddr = nip19.naddrEncode({ kind, pubkey, identifier });
-        return `https://njump.to/${naddr}`;
+        // Human-readable kind labels for common addressable event types
+        const kindLabels: Record<number, string> = {
+          30023: 'Long-form article',
+          30024: 'Draft article',
+          30030: 'Emoji set',
+          30078: 'App-specific data',
+          31922: 'Calendar event',
+          31923: 'Calendar RSVP',
+          31989: 'Handler recommendation',
+          31990: 'Handler information',
+        };
+        const label = kindLabels[kind] ?? `Kind ${kind}`;
+        const shortId = identifier ? `d:${identifier.slice(0, 12)}${identifier.length > 12 ? '...' : ''}` : 'addressable event';
+
+        try {
+          const naddr = nip19.naddrEncode({ kind, pubkey, identifier });
+          return {
+            isAddressable: true,
+            kindLabel: label,
+            displayId: shortId,
+            njumpUrl: `https://njump.to/${naddr}`,
+          };
+        } catch {
+          return { isAddressable: true, kindLabel: label, displayId: shortId, njumpUrl: null };
+        }
       }
     }
-    return null;
+
+    // Unknown format
+    return { isAddressable: false, kindLabel: null, displayId: targetId.slice(0, 16), njumpUrl: null };
   })();
 
   const handleOpenNjump = () => {
@@ -299,9 +333,12 @@ function MissingTargetCard({ targetId, lookmarks, latestLookmarkAt }: MissingTar
               <AlertCircle className="h-5 w-5 text-muted-foreground" />
             </div>
             <div className="min-w-0 flex-1">
-              <span className="font-medium text-muted-foreground">Event unavailable</span>
+              <span className="font-medium text-muted-foreground">
+                {isAddressable ? 'Addressable event unavailable' : 'Event unavailable'}
+              </span>
               <span className="text-xs text-muted-foreground/70 block truncate max-w-[250px]">
-                {targetId.slice(0, 16)}...
+                {kindLabel && <span className="mr-1">{kindLabel} ·</span>}
+                {displayId}
               </span>
             </div>
           </div>
@@ -314,7 +351,7 @@ function MissingTargetCard({ targetId, lookmarks, latestLookmarkAt }: MissingTar
 
       <CardContent className="pb-3">
         <p className="text-sm text-muted-foreground">
-          This event couldn't be loaded from your relays. It may be on a different relay or deleted.
+          This {isAddressable ? 'addressable event' : 'event'} couldn't be loaded from your relays. It may be on a different relay or deleted.
         </p>
       </CardContent>
 
