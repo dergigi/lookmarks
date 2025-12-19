@@ -1,7 +1,7 @@
 import { useMemo } from 'react';
 import { nip19 } from 'nostr-tools';
 import { useNavigate, useParams } from 'react-router-dom';
-import { ArrowLeft, ExternalLink, Loader2, Eye, Heart, MessageSquare, Repeat } from 'lucide-react';
+import { ArrowLeft, ExternalLink, Loader2, Eye, Heart, MessageSquare, Repeat, ChevronDown } from 'lucide-react';
 import type { NostrEvent } from '@nostrify/nostrify';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faMobileScreen } from '@fortawesome/free-solid-svg-icons';
@@ -105,6 +105,7 @@ function ProfileLookmarksView({ pubkey }: { pubkey: string }) {
   const npub = nip19.npubEncode(pubkey);
   const author = useAuthor(pubkey);
   const lookmarksQuery = useLookmarks(pubkey);
+  const { hasNextPage, fetchNextPage, isFetchingNextPage } = lookmarksQuery;
 
   const displayName = author.data?.metadata?.name ?? genUserName(pubkey);
   const avatar = author.data?.metadata?.picture;
@@ -186,7 +187,7 @@ function ProfileLookmarksView({ pubkey }: { pubkey: string }) {
           </div>
 
           {/* Lookmark stats pills */}
-          {hasStats && (
+          {(hasStats || hasNextPage) && (
             <div className="flex items-center gap-2 mt-3 justify-end">
               {reactionCount > 0 && (
                 <span className="inline-flex items-center gap-1 rounded-full border border-border/50 bg-muted/40 px-2 py-1 text-xs">
@@ -208,6 +209,20 @@ function ProfileLookmarksView({ pubkey }: { pubkey: string }) {
                   <Repeat className="h-3 w-3" />
                   <span className="font-medium text-foreground">{quoteCount}</span>
                 </span>
+              )}
+              {hasNextPage && (
+                <button
+                  onClick={() => fetchNextPage()}
+                  disabled={isFetchingNextPage}
+                  className="inline-flex items-center gap-1 rounded-full border border-border/50 bg-muted/40 px-2 py-1 text-xs transition-colors hover:bg-muted/70 disabled:opacity-50"
+                >
+                  {isFetchingNextPage ? (
+                    <Loader2 className="h-3 w-3 animate-spin" />
+                  ) : (
+                    <ChevronDown className="h-3 w-3" />
+                  )}
+                  <span className="font-medium text-foreground">more</span>
+                </button>
               )}
             </div>
           )}
