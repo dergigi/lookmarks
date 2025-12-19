@@ -68,15 +68,32 @@ function isReferentialEvent(event: NostrEvent): boolean {
 function parseAddressableTag(aTag: string): { kind: number; pubkey: string; identifier: string } | null {
   const parts = aTag.split(':');
   if (parts.length !== 3) return null;
-  
+
   const kind = parseInt(parts[0], 10);
   if (isNaN(kind)) return null;
-  
+
   return {
     kind,
     pubkey: parts[1],
     identifier: parts[2],
   };
+}
+
+// Maximum number of hint relays to try for missing event resolution.
+// Caps fan-out to prevent excessive outbound connections from malicious hints.
+const MAX_HINT_RELAYS = 5;
+
+/**
+ * Validates a relay URL is a proper WebSocket URL.
+ * Only allows wss:// and ws:// schemes to prevent arbitrary outbound requests.
+ */
+function isValidRelayUrl(url: string): boolean {
+  try {
+    const parsed = new URL(url);
+    return parsed.protocol === 'wss:' || parsed.protocol === 'ws:';
+  } catch {
+    return false;
+  }
 }
 
 /**
@@ -208,29 +225,28 @@ export function useLookmarks(pubkey?: string) {
       const relayHints = new Map<string, Set<string>>(); // eventId -> Set of relay URLs
       const referencedAddressables = new Map<string, { kind: number; pubkey: string; identifier: string; relayHint?: string }>();
 
+      // Helper to add validated relay hints
+      const addHint = (eventId: string, url: string | undefined) => {
+        if (!url || !isValidRelayUrl(url)) return;
+        const hints = relayHints.get(eventId) ?? new Set();
+        hints.add(url);
+        relayHints.set(eventId, hints);
+      };
+
       for (const event of allLookmarkEvents) {
         if (event.kind === 7) {
           // Reactions use 'e' tag
           const eTag = event.tags.find(([name]) => name === 'e');
           if (eTag?.[1]) {
             referencedEventIds.add(eTag[1]);
-            // Collect relay hint if present (third element)
-            if (eTag[2]) {
-              const hints = relayHints.get(eTag[1]) ?? new Set();
-              hints.add(eTag[2]);
-              relayHints.set(eTag[1], hints);
-            }
+            addHint(eTag[1], eTag[2]);
           }
         } else if (event.kind === 1) {
           // Check for quote ('q' tag) first
           const qTag = event.tags.find(([name]) => name === 'q');
           if (qTag?.[1]) {
             referencedEventIds.add(qTag[1]);
-            if (qTag[2]) {
-              const hints = relayHints.get(qTag[1]) ?? new Set();
-              hints.add(qTag[2]);
-              relayHints.set(qTag[1], hints);
-            }
+            addHint(qTag[1], qTag[2]);
           } else {
             // Check for addressable reference ('a' tag)
             const aTag = event.tags.find(([name]) => name === 'a');
@@ -238,7 +254,8 @@ export function useLookmarks(pubkey?: string) {
               const parsed = parseAddressableTag(aTag[1]);
               if (parsed) {
                 const key = `${parsed.kind}:${parsed.pubkey}:${parsed.identifier}`;
-                referencedAddressables.set(key, { ...parsed, relayHint: aTag[2] });
+                const validHint = aTag[2] && isValidRelayUrl(aTag[2]) ? aTag[2] : undefined;
+                referencedAddressables.set(key, { ...parsed, relayHint: validHint });
               }
             } else {
               // Otherwise check for reply ('e' tag with reply marker, or last 'e' tag)
@@ -247,11 +264,7 @@ export function useLookmarks(pubkey?: string) {
                 || eTags[eTags.length - 1];
               if (replyTag?.[1]) {
                 referencedEventIds.add(replyTag[1]);
-                if (replyTag[2]) {
-                  const hints = relayHints.get(replyTag[1]) ?? new Set();
-                  hints.add(replyTag[2]);
-                  relayHints.set(replyTag[1], hints);
-                }
+                addHint(replyTag[1], replyTag[2]);
               }
             }
           }
@@ -277,16 +290,20 @@ export function useLookmarks(pubkey?: string) {
       const missingIds = Array.from(referencedEventIds).filter(id => !foundIds.has(id));
 
       if (missingIds.length > 0 && typeof nostr.group === 'function') {
-        // Collect unique hint relays for missing events
-        const hintRelayUrls = new Set<string>();
+        // Collect unique hint relays for missing events, capped to prevent fan-out attacks
+        const hintRelayUrls: string[] = [];
         for (const id of missingIds) {
+          if (hintRelayUrls.length >= MAX_HINT_RELAYS) break;
           const hints = relayHints.get(id);
           if (hints) {
-            for (const url of hints) hintRelayUrls.add(url);
+            for (const url of hints) {
+              if (hintRelayUrls.length >= MAX_HINT_RELAYS) break;
+              if (!hintRelayUrls.includes(url)) hintRelayUrls.push(url);
+            }
           }
         }
 
-        // Query hint relays and search relays in parallel for missing events
+        // Query hint relays (capped) and search relays in parallel for missing events
         const fallbackRelays = [...hintRelayUrls, ...SEARCH_RELAY_URLS];
         const fallbackPromises = fallbackRelays.map(async (url) => {
           try {
