@@ -163,10 +163,11 @@ const Index = () => {
               </div>
               <Button
                 onClick={handleSearch}
-                className="h-11 px-6 bg-gradient-to-r from-amber-500 to-orange-500 hover:from-amber-600 hover:to-orange-600 text-white shadow-lg shadow-amber-500/25 shrink-0"
+                aria-label="Search lookmarks"
+                title="Search lookmarks"
+                className="h-11 w-11 p-0 bg-gradient-to-r from-amber-500 to-orange-500 hover:from-amber-600 hover:to-orange-600 text-white shadow-lg shadow-amber-500/25 shrink-0"
               >
-                <Eye className="h-4 w-4 mr-2" />
-                Look
+                <span className="text-lg leading-none">👀</span>
               </Button>
             </div>
             {searchError && (
