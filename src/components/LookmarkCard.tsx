@@ -167,7 +167,7 @@ export function LookmarkCard({ lookmarkedEvent }: LookmarkCardProps) {
           
           {latestLookmark && latestLookmarkDisplayName ? (
             <span className="text-xs text-muted-foreground">
-              Lookmarked by{' '}
+              by{' '}
               {latestLookmarkNpub ? (
                 <Link
                   to={`/p/${latestLookmarkNpub}`}
