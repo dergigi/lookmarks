@@ -39,7 +39,7 @@ export default function What() {
 
         <hr className="my-10 border-border" />
 
-        <h2 className="text-lg font-semibold mb-6">Three types</h2>
+        <p className="text-muted-foreground mb-6">This app collects three types of lookmarks:</p>
 
         <div className="space-y-8 text-muted-foreground">
           <div>
