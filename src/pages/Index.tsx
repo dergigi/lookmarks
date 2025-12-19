@@ -207,7 +207,7 @@ const Index = () => {
               </span>
             </h2>
             <p className="text-muted-foreground max-w-lg mx-auto">
-              A “lookmark” is when someone reacts to a post with an eyes emoji. It’s like a bookmark, but less official.
+              A “lookmark” is any 👀 reaction to a note. It’s like a bookmark, but less official.
               {' '}
               <Link
                 to="/what"
