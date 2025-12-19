@@ -14,6 +14,8 @@ export function AppRouter() {
         <Route path="/" element={<Index />} />
         <Route path="/what" element={<What />} />
         {/* NIP-19 route for npub1, note1, naddr1, nevent1, nprofile1 */}
+        {/* Alias route for profile-style URLs */}
+        <Route path="/p/:nip19" element={<NIP19Page />} />
         <Route path="/:nip19" element={<NIP19Page />} />
         {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
         <Route path="*" element={<NotFound />} />

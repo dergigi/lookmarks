@@ -5,6 +5,7 @@ import { Skeleton } from '@/components/ui/skeleton';
 import { Button } from '@/components/ui/button';
 import { LookmarkCard } from '@/components/LookmarkCard';
 import { useLookmarks, type LookmarkedEvent } from '@/hooks/useLookmarks';
+import { useAppContext } from '@/hooks/useAppContext';
 
 interface LookmarkFeedProps {
   pubkey?: string;
@@ -37,6 +38,9 @@ function LookmarkSkeleton() {
 }
 
 export function LookmarkFeed({ pubkey }: LookmarkFeedProps) {
+  const { config } = useAppContext();
+  const readRelayCount = config.relayMetadata.relays.filter(r => r.read).length;
+
   const {
     data,
     isLoading,
@@ -126,7 +130,13 @@ export function LookmarkFeed({ pubkey }: LookmarkFeedProps) {
     <div className="space-y-4">
       <div className="flex items-center justify-between">
         <p className="text-sm text-muted-foreground">
-          Found <span className="font-semibold text-foreground">{lookmarks.length}</span> lookmarks
+          Found{' '}
+          <span className="font-semibold text-foreground">{lookmarks.length}</span>
+          {' '}
+          lookmarks across{' '}
+          <span className="font-semibold text-foreground">{readRelayCount}</span>
+          {' '}
+          {readRelayCount === 1 ? 'relay' : 'relays'}
         </p>
         <Button
           variant="ghost"

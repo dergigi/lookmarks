@@ -4,7 +4,7 @@ import { Eye, Search, Globe, User } from 'lucide-react';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faCircleInfo } from '@fortawesome/free-solid-svg-icons';
 import { nip19 } from 'nostr-tools';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
@@ -15,7 +15,6 @@ import {
 } from '@/components/ui/tooltip';
 import { LoginArea } from '@/components/auth/LoginArea';
 import { LookmarkFeed } from '@/components/LookmarkFeed';
-import { RelayIndicator } from '@/components/RelayIndicator';
 import { useCurrentUser } from '@/hooks/useCurrentUser';
 import { useLookmarks } from '@/hooks/useLookmarks';
 
@@ -48,6 +47,7 @@ const Index = () => {
   const [searchError, setSearchError] = useState<string | null>(null);
   const [isSearchFocused, setIsSearchFocused] = useState(false);
   const [placeholderIndex, setPlaceholderIndex] = useState(0);
+  const navigate = useNavigate();
 
   const { user } = useCurrentUser();
   const globalLookmarks = useLookmarks();
@@ -129,6 +129,7 @@ const Index = () => {
       if (trimmed.length === 0 && placeholderNpub) {
         setSearchInput(placeholderNpub);
       }
+      navigate(`/p/${nip19.npubEncode(pubkey)}`);
     } else {
       setSearchError('Invalid npub or pubkey format');
     }
@@ -173,8 +174,6 @@ const Index = () => {
             </div>
 
             <div className="flex items-center gap-2 shrink-0">
-              <RelayIndicator />
-
               <LoginArea className="max-w-60" />
 
               <Tooltip>
