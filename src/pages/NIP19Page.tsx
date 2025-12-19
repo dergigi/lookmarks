@@ -1,3 +1,4 @@
+import { useMemo } from 'react';
 import { nip19 } from 'nostr-tools';
 import { useNavigate, useParams } from 'react-router-dom';
 import { ArrowLeft, ExternalLink, Loader2, Eye, Heart, MessageSquare, Repeat } from 'lucide-react';
@@ -115,8 +116,8 @@ function ProfileLookmarksView({ pubkey }: { pubkey: string }) {
   const nip05 = author.data?.metadata?.nip05;
   const npubShort = `${npub.slice(0, 12)}…${npub.slice(-8)}`;
 
-  // Calculate totals across all pages
-  const { reactionCount, replyCount, quoteCount } = (() => {
+  // Calculate totals across all loaded pages
+  const { reactionCount, replyCount, quoteCount } = useMemo(() => {
     let reactionCount = 0;
     let replyCount = 0;
     let quoteCount = 0;
@@ -132,7 +133,7 @@ function ProfileLookmarksView({ pubkey }: { pubkey: string }) {
     }
 
     return { reactionCount, replyCount, quoteCount };
-  })();
+  }, [lookmarksQuery.data?.pages]);
 
   const hasStats = reactionCount > 0 || replyCount > 0 || quoteCount > 0;
 
