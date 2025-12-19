@@ -1,7 +1,7 @@
 // NOTE: This file is stable and usually should not be modified.
 // It is important that all functionality in this file is preserved, and should only be modified if explicitly requested.
 
-import { ChevronDown, LogOut, UserIcon } from 'lucide-react';
+import { ChevronDown, LogOut, UserIcon, UserPlus, Wallet } from 'lucide-react';
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -10,10 +10,15 @@ import {
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu.tsx';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar.tsx';
+import { WalletModal } from '@/components/WalletModal';
 import { useLoggedInAccounts, type Account } from '@/hooks/useLoggedInAccounts';
 import { genUserName } from '@/lib/genUserName';
 
-export function AccountSwitcher() {
+interface AccountSwitcherProps {
+  onAddAccountClick: () => void;
+}
+
+export function AccountSwitcher({ onAddAccountClick }: AccountSwitcherProps) {
   const { currentUser, otherUsers, setLogin, removeLogin } = useLoggedInAccounts();
 
   if (!currentUser) return null;
@@ -55,6 +60,22 @@ export function AccountSwitcher() {
           </DropdownMenuItem>
         ))}
         <DropdownMenuSeparator />
+        <WalletModal>
+          <DropdownMenuItem
+            className='flex items-center gap-2 cursor-pointer p-2 rounded-md'
+            onSelect={(e) => e.preventDefault()}
+          >
+            <Wallet className='w-4 h-4' />
+            <span>Wallet Settings</span>
+          </DropdownMenuItem>
+        </WalletModal>
+        <DropdownMenuItem
+          onClick={onAddAccountClick}
+          className='flex items-center gap-2 cursor-pointer p-2 rounded-md'
+        >
+          <UserPlus className='w-4 h-4' />
+          <span>Add another account</span>
+        </DropdownMenuItem>
         <DropdownMenuItem
           onClick={() => removeLogin(currentUser.id)}
           className='flex items-center gap-2 cursor-pointer p-2 rounded-md text-red-500'

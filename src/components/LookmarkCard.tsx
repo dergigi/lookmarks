@@ -137,35 +137,26 @@ export function LookmarkCard({ lookmarkedEvent }: LookmarkCardProps) {
           {/* Lookmark stats */}
           <div className="flex items-center gap-2 text-xs text-muted-foreground">
             {reactionCount > 0 && (
-              <div
-                className="inline-flex items-center gap-1 rounded-full border border-border/50 bg-muted/40 px-2 py-1"
-                title="👀 Reactions"
-              >
-                <Eye className="h-3 w-3 text-muted-foreground" />
+              <div className="flex items-center gap-1" title="👀 Reactions">
+                <Eye className="h-3 w-3 text-amber-500" />
                 <Heart className="h-3 w-3" />
-                <span className="font-medium text-foreground">{reactionCount}</span>
+                <span>{reactionCount}</span>
               </div>
             )}
             
             {replyCount > 0 && (
-              <div
-                className="inline-flex items-center gap-1 rounded-full border border-border/50 bg-muted/40 px-2 py-1"
-                title="👀 Replies"
-              >
-                <Eye className="h-3 w-3 text-muted-foreground" />
+              <div className="flex items-center gap-1" title="👀 Replies">
+                <Eye className="h-3 w-3 text-amber-500" />
                 <MessageSquare className="h-3 w-3" />
-                <span className="font-medium text-foreground">{replyCount}</span>
+                <span>{replyCount}</span>
               </div>
             )}
             
             {quoteCount > 0 && (
-              <div
-                className="inline-flex items-center gap-1 rounded-full border border-border/50 bg-muted/40 px-2 py-1"
-                title="👀 Quotes"
-              >
-                <Eye className="h-3 w-3 text-muted-foreground" />
+              <div className="flex items-center gap-1" title="👀 Quotes">
+                <Eye className="h-3 w-3 text-amber-500" />
                 <Repeat className="h-3 w-3" />
-                <span className="font-medium text-foreground">{quoteCount}</span>
+                <span>{quoteCount}</span>
               </div>
             )}
           </div>

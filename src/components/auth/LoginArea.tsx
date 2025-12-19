@@ -27,7 +27,7 @@ export function LoginArea({ className }: LoginAreaProps) {
   return (
     <div className={cn("inline-flex items-center justify-center", className)}>
       {currentUser ? (
-        <AccountSwitcher />
+        <AccountSwitcher onAddAccountClick={() => setLoginDialogOpen(true)} />
       ) : (
         <div className="flex gap-3 justify-center">
           <Button
