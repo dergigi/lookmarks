@@ -3,15 +3,18 @@ import { use$, useRenderedContent, type ComponentMap } from 'applesauce-react/ho
 import { isAudioURL, isImageURL, isVideoURL } from 'applesauce-core/helpers';
 import type { NostrEvent } from 'nostr-tools';
 
+import { NjumpLink } from '@/components/NjumpLink';
 import { eventStore } from '@/nostr/core';
 import { useProfile } from '@/hooks/useProfile';
 import { cn } from '@/lib/utils';
+
+const mentionLinkClass = 'font-medium text-primary hover:underline';
 
 /** Resolves an npub/nprofile mention to the user's display name. */
 function ProfileMention({ pubkey, encoded }: { pubkey: string; encoded: string }) {
   const { displayName } = useProfile(pubkey);
   return (
-    <Link to={`/${encoded}`} className="font-medium text-primary hover:underline">
+    <Link to={`/${encoded}`} className={mentionLinkClass}>
       @{displayName}
     </Link>
   );
@@ -33,7 +36,7 @@ function EventMention({
   const author = event?.pubkey ?? fallbackAuthor;
   const { displayName } = useProfile(author);
   return (
-    <Link to={`/${encoded}`} className="font-medium text-primary hover:underline">
+    <Link to={`/${encoded}`} className={mentionLinkClass}>
       ↗ note{author ? ` by ${displayName}` : ''}
     </Link>
   );
@@ -100,20 +103,15 @@ const components: ComponentMap = {
         );
       case 'naddr':
         return (
-          <Link to={`/${encoded}`} className="font-medium text-primary hover:underline">
+          <Link to={`/${encoded}`} className={mentionLinkClass}>
             ↗ post
           </Link>
         );
       default:
         return (
-          <a
-            href={`https://njump.to/${encoded}`}
-            target="_blank"
-            rel="noopener noreferrer"
-            className="text-primary hover:underline"
-          >
+          <NjumpLink id={encoded} className="text-primary hover:underline">
             @{encoded.slice(0, 12)}…
-          </a>
+          </NjumpLink>
         );
     }
   },

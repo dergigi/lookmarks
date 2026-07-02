@@ -7,9 +7,11 @@ import type { NostrEvent } from 'nostr-tools';
 import NotFound from './NotFound';
 import { LookmarkFeed } from '@/components/LookmarkFeed';
 import { NoteBody } from '@/components/NoteBody';
-import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
-import { Skeleton } from '@/components/ui/skeleton';
+import { AuthorAvatar } from '@/components/AuthorAvatar';
+import { NjumpLink } from '@/components/NjumpLink';
+import { NoteCardSkeleton } from '@/components/NoteCardSkeleton';
 import { useProfile } from '@/hooks/useProfile';
+import { formatTimestamp } from '@/lib/formatTimestamp';
 import { eventStore } from '@/nostr/core';
 
 export function NIP19Page() {
@@ -92,23 +94,16 @@ function ProfileView({ pubkey }: { pubkey: string }) {
   return (
     <div className="space-y-6">
       <div className="flex items-center gap-4">
-        <Avatar className="h-14 w-14">
-          <AvatarImage src={picture} alt={displayName} />
-          <AvatarFallback>{displayName.slice(0, 2).toUpperCase()}</AvatarFallback>
-        </Avatar>
+        <AuthorAvatar src={picture} name={displayName} className="h-14 w-14" />
         <div className="min-w-0 flex-1">
           <div className="truncate text-lg font-semibold text-foreground">{displayName}</div>
           <div className="truncate text-sm text-muted-foreground">{nip05 ?? npubShort}</div>
         </div>
-        <a
-          href={`https://njump.to/${npub}`}
-          target="_blank"
-          rel="noopener noreferrer"
-          className="shrink-0 text-muted-foreground hover:text-foreground"
+        <NjumpLink
+          id={npub}
           title="Open profile in njump.to"
-        >
-          <ExternalLink className="h-4 w-4" />
-        </a>
+          className="shrink-0 text-muted-foreground hover:text-foreground"
+        />
       </div>
 
       <LookmarkFeed pubkey={pubkey} />
@@ -144,27 +139,15 @@ function EventCard({ event, nip19Id }: { event: NostrEvent | undefined; nip19Id:
 
   if (event === undefined) {
     return (
-      <div className="rounded-xl border border-border bg-card p-4">
-        <div className="mb-3 flex items-center gap-3">
-          <Skeleton className="h-9 w-9 rounded-full" />
-          <div className="flex-1 space-y-2">
-            <Skeleton className="h-4 w-40" />
-            <Skeleton className="h-3 w-24" />
-          </div>
-        </div>
-        <div className="space-y-2">
-          <Skeleton className="h-4 w-full" />
-          <Skeleton className="h-4 w-5/6" />
-        </div>
-        <a
-          href={`https://njump.to/${nip19Id}`}
-          target="_blank"
-          rel="noopener noreferrer"
-          className="mt-4 inline-flex items-center gap-2 text-sm text-muted-foreground hover:text-foreground"
+      <div className="space-y-4">
+        <NoteCardSkeleton />
+        <NjumpLink
+          id={nip19Id}
+          className="inline-flex items-center gap-2 text-sm text-muted-foreground hover:text-foreground"
         >
           <ExternalLink className="h-4 w-4" />
           Open via njump.to
-        </a>
+        </NjumpLink>
       </div>
     );
   }
@@ -172,25 +155,12 @@ function EventCard({ event, nip19Id }: { event: NostrEvent | undefined; nip19Id:
   return (
     <article className="rounded-xl border border-border bg-card p-4">
       <div className="mb-3 flex items-center gap-3">
-        <Avatar className="h-9 w-9">
-          <AvatarImage src={author.picture} alt={author.displayName} />
-          <AvatarFallback>{author.displayName.slice(0, 2).toUpperCase()}</AvatarFallback>
-        </Avatar>
+        <AuthorAvatar src={author.picture} name={author.displayName} />
         <div className="min-w-0 flex-1">
           <div className="truncate font-medium text-foreground">{author.displayName}</div>
-          <div className="text-xs text-muted-foreground">
-            {new Date(event.created_at * 1000).toLocaleString()}
-          </div>
+          <div className="text-xs text-muted-foreground">{formatTimestamp(event.created_at)}</div>
         </div>
-        <a
-          href={`https://njump.to/${nip19Id}`}
-          target="_blank"
-          rel="noopener noreferrer"
-          className="shrink-0 text-muted-foreground hover:text-foreground"
-          title="Open in njump.to"
-        >
-          <ExternalLink className="h-4 w-4" />
-        </a>
+        <NjumpLink id={nip19Id} className="shrink-0 text-muted-foreground hover:text-foreground" />
       </div>
       <NoteBody event={event} className="text-sm text-foreground/90" />
     </article>

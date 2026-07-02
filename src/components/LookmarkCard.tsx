@@ -2,7 +2,8 @@ import { nip19 } from 'nostr-tools';
 import { Link } from 'react-router-dom';
 import { ExternalLink, MessageSquare, Repeat } from 'lucide-react';
 
-import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
+import { AuthorAvatar } from '@/components/AuthorAvatar';
+import { NjumpLink } from '@/components/NjumpLink';
 import { NoteBody } from '@/components/NoteBody';
 import { useProfile } from '@/hooks/useProfile';
 import { formatTimestamp } from '@/lib/formatTimestamp';
@@ -31,10 +32,7 @@ export function LookmarkCard({ lookmarkedEvent }: { lookmarkedEvent: LookmarkedE
     <article className="rounded-xl border border-border bg-card p-4 transition-colors hover:border-foreground/20">
       <div className="mb-3 flex items-center gap-3">
         <Link to={`/p/${npub}`} className="group flex min-w-0 items-center gap-3">
-          <Avatar className="h-9 w-9 shrink-0">
-            <AvatarImage src={author.picture} alt={author.displayName} />
-            <AvatarFallback>{author.displayName.slice(0, 2).toUpperCase()}</AvatarFallback>
-          </Avatar>
+          <AuthorAvatar src={author.picture} name={author.displayName} className="shrink-0" />
           <div className="min-w-0">
             <div className="truncate font-medium text-foreground group-hover:underline">
               {author.displayName}
@@ -44,15 +42,13 @@ export function LookmarkCard({ lookmarkedEvent }: { lookmarkedEvent: LookmarkedE
             )}
           </div>
         </Link>
-        <a
-          href={`https://njump.to/${nevent}`}
-          target="_blank"
-          rel="noopener noreferrer"
-          className="ml-auto shrink-0 text-xs text-muted-foreground hover:text-foreground"
+        <NjumpLink
+          id={nevent}
           title="Open note"
+          className="ml-auto shrink-0 text-xs text-muted-foreground hover:text-foreground"
         >
           {formatTimestamp(event.created_at)}
-        </a>
+        </NjumpLink>
       </div>
 
       <NoteBody event={event} className="text-sm text-foreground/90 line-clamp-[12]" />
@@ -91,15 +87,9 @@ export function LookmarkCard({ lookmarkedEvent }: { lookmarkedEvent: LookmarkedE
           </span>
         )}
 
-        <a
-          href={`https://njump.to/${nevent}`}
-          target="_blank"
-          rel="noopener noreferrer"
-          className="ml-auto inline-flex items-center gap-1 hover:text-foreground"
-          title="Open in njump.to"
-        >
+        <NjumpLink id={nevent} className="ml-auto inline-flex items-center gap-1 hover:text-foreground">
           <ExternalLink className="h-3.5 w-3.5" />
-        </a>
+        </NjumpLink>
       </div>
     </article>
   );

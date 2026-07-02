@@ -1,28 +1,10 @@
 import { ChevronDown, Eye, Loader2, RefreshCw } from 'lucide-react';
 
 import { Button } from '@/components/ui/button';
-import { Skeleton } from '@/components/ui/skeleton';
 import { LookmarkCard } from '@/components/LookmarkCard';
+import { NoteCardSkeleton } from '@/components/NoteCardSkeleton';
 import { ConnectedRelaysPill } from '@/components/ConnectedRelaysPill';
 import { useLookmarksFeed } from '@/hooks/useLookmarksFeed';
-
-function CardSkeleton() {
-  return (
-    <div className="rounded-xl border border-border bg-card p-4">
-      <div className="mb-3 flex items-center gap-3">
-        <Skeleton className="h-9 w-9 rounded-full" />
-        <div className="flex-1 space-y-2">
-          <Skeleton className="h-4 w-32" />
-          <Skeleton className="h-3 w-20" />
-        </div>
-      </div>
-      <div className="space-y-2">
-        <Skeleton className="h-4 w-full" />
-        <Skeleton className="h-4 w-4/5" />
-      </div>
-    </div>
-  );
-}
 
 export function LookmarkFeed({ pubkey }: { pubkey?: string }) {
   const { lookmarks, loading, loadingMore, hasMore, error, relays, loadMore, refresh } =
@@ -32,7 +14,7 @@ export function LookmarkFeed({ pubkey }: { pubkey?: string }) {
     return (
       <div className="space-y-4">
         {Array.from({ length: 4 }).map((_, i) => (
-          <CardSkeleton key={i} />
+          <NoteCardSkeleton key={i} />
         ))}
       </div>
     );
