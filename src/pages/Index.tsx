@@ -28,8 +28,7 @@ const Index = () => {
 
   useSeoMeta({
     title: 'Lookmarks — what’s catching people’s eyes on Nostr',
-    description:
-      'A read-only explorer for Nostr posts marked with 👀 reactions, replies, or quotes.',
+    description: 'A read-only explorer for Nostr posts marked with 👀 reactions.',
   });
 
   const handleSearch = () => {
@@ -65,7 +64,7 @@ const Index = () => {
           What’s catching people’s eyes
         </h1>
         <p className="mt-2 text-muted-foreground">
-          A “lookmark” is any 👀 reaction, reply, or quote on a note.{' '}
+          A “lookmark” is a 👀 reaction on a note.{' '}
           <Link
             to="/what"
             className="underline decoration-border underline-offset-4 hover:decoration-foreground/50"

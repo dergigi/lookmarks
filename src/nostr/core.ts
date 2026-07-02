@@ -2,6 +2,7 @@ import { EventStore } from 'applesauce-core';
 import { RelayPool } from 'applesauce-relay';
 import { createAddressLoader, createEventLoader } from 'applesauce-loaders/loaders';
 import { verifyEvent } from 'nostr-tools';
+import { map, type Observable } from 'rxjs';
 
 import { DEFAULT_RELAYS, LOOKUP_RELAYS } from './relays';
 
@@ -29,3 +30,11 @@ export const addressLoader = createAddressLoader(pool, {
 // automatically fetch from the network when the event isn't in the store yet.
 eventStore.eventLoader = (pointer) =>
   'id' in pointer ? eventLoader(pointer) : addressLoader(pointer);
+
+/**
+ * A user's NIP-65 outbox (write) relays. Subscribing triggers a kind 10002
+ * fetch via the fallback loader. Emits [] until the mailbox list is known.
+ */
+export function userOutboxes(pubkey: string): Observable<string[]> {
+  return eventStore.mailboxes(pubkey).pipe(map((m) => m?.outboxes ?? []));
+}

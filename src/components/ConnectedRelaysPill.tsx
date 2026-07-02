@@ -1,11 +1,16 @@
 import { cn } from '@/lib/utils';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
-import { SEARCH_RELAYS, relayHost } from '@/nostr/relays';
+import { relayHost } from '@/nostr/relays';
 
-/** Shows the NIP-50 search relays used to discover lookmarks. */
-export function ConnectedRelaysPill({ className }: { className?: string }) {
-  const relays = SEARCH_RELAYS;
+interface ConnectedRelaysPillProps {
+  relays: string[];
+  /** Short description shown in the popover. */
+  description?: string;
+  className?: string;
+}
 
+/** Shows which relays the current feed is being read from. */
+export function ConnectedRelaysPill({ relays, description, className }: ConnectedRelaysPillProps) {
   return (
     <Popover>
       <PopoverTrigger asChild>
@@ -26,9 +31,9 @@ export function ConnectedRelaysPill({ className }: { className?: string }) {
 
       <PopoverContent align="start" className="w-72 p-3">
         <div className="space-y-2">
-          <div className="text-sm font-medium text-foreground">Search relays</div>
+          <div className="text-sm font-medium text-foreground">Relays</div>
           <div className="text-xs text-muted-foreground">
-            Lookmarks are discovered on these NIP-50 relays.
+            {description ?? 'Reading reactions from these relays.'}
           </div>
           <div className="space-y-1 pt-1">
             {relays.map((url) => (

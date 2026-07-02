@@ -25,7 +25,7 @@ function CardSkeleton() {
 }
 
 export function LookmarkFeed({ pubkey }: { pubkey?: string }) {
-  const { lookmarks, loading, loadingMore, hasMore, error, loadMore, refresh } =
+  const { lookmarks, loading, loadingMore, hasMore, error, relays, loadMore, refresh } =
     useLookmarksFeed(pubkey);
 
   if (lookmarks.length === 0 && loading) {
@@ -74,7 +74,15 @@ export function LookmarkFeed({ pubkey }: { pubkey?: string }) {
     <div className="space-y-4">
       <div className="flex items-center justify-between text-sm text-muted-foreground">
         <span>
-          {lookmarks.length} lookmarked across <ConnectedRelaysPill />
+          {lookmarks.length} lookmarked across{' '}
+          <ConnectedRelaysPill
+            relays={relays}
+            description={
+              pubkey
+                ? "Reading this user's reactions from their outbox relays."
+                : 'Reading recent reactions from these relays.'
+            }
+          />
         </span>
         <Button variant="ghost" size="sm" className="text-xs" onClick={refresh}>
           <RefreshCw className="mr-1 h-3 w-3" />
