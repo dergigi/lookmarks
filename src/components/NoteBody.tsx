@@ -1,8 +1,43 @@
-import { useRenderedContent, type ComponentMap } from 'applesauce-react/hooks';
+import { Link } from 'react-router-dom';
+import { use$, useRenderedContent, type ComponentMap } from 'applesauce-react/hooks';
 import { isAudioURL, isImageURL, isVideoURL } from 'applesauce-core/helpers';
 import type { NostrEvent } from 'nostr-tools';
 
+import { eventStore } from '@/nostr/core';
+import { useProfile } from '@/hooks/useProfile';
 import { cn } from '@/lib/utils';
+
+/** Resolves an npub/nprofile mention to the user's display name. */
+function ProfileMention({ pubkey, encoded }: { pubkey: string; encoded: string }) {
+  const { displayName } = useProfile(pubkey);
+  return (
+    <Link to={`/${encoded}`} className="font-medium text-primary hover:underline">
+      @{displayName}
+    </Link>
+  );
+}
+
+/** Resolves a note/nevent mention to the referenced note's author. */
+function EventMention({
+  id,
+  relays,
+  fallbackAuthor,
+  encoded,
+}: {
+  id: string;
+  relays?: string[];
+  fallbackAuthor?: string;
+  encoded: string;
+}) {
+  const event = use$(() => eventStore.event({ id, relays }), [id]);
+  const author = event?.pubkey ?? fallbackAuthor;
+  const { displayName } = useProfile(author);
+  return (
+    <Link to={`/${encoded}`} className="font-medium text-primary hover:underline">
+      ↗ note{author ? ` by ${displayName}` : ''}
+    </Link>
+  );
+}
 
 /** How each parsed content token is rendered. Kept intentionally minimal. */
 const components: ComponentMap = {
@@ -45,16 +80,43 @@ const components: ComponentMap = {
       </a>
     );
   },
-  mention: ({ node }) => (
-    <a
-      href={`https://njump.me/${node.encoded}`}
-      target="_blank"
-      rel="noopener noreferrer"
-      className="text-primary hover:underline"
-    >
-      @{node.encoded.slice(0, 12)}…
-    </a>
-  ),
+  mention: ({ node }) => {
+    const { decoded, encoded } = node;
+    switch (decoded.type) {
+      case 'npub':
+        return <ProfileMention pubkey={decoded.data} encoded={encoded} />;
+      case 'nprofile':
+        return <ProfileMention pubkey={decoded.data.pubkey} encoded={encoded} />;
+      case 'note':
+        return <EventMention id={decoded.data} encoded={encoded} />;
+      case 'nevent':
+        return (
+          <EventMention
+            id={decoded.data.id}
+            relays={decoded.data.relays}
+            fallbackAuthor={decoded.data.author}
+            encoded={encoded}
+          />
+        );
+      case 'naddr':
+        return (
+          <Link to={`/${encoded}`} className="font-medium text-primary hover:underline">
+            ↗ post
+          </Link>
+        );
+      default:
+        return (
+          <a
+            href={`https://njump.me/${encoded}`}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="text-primary hover:underline"
+          >
+            @{encoded.slice(0, 12)}…
+          </a>
+        );
+    }
+  },
   hashtag: ({ node }) => <span className="text-primary">#{node.hashtag}</span>,
   emoji: ({ node }) => (
     <img
