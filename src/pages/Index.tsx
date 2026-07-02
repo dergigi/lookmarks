@@ -124,21 +124,6 @@ const Index = () => {
         </div>
       </header>
 
-      <section className="mx-auto w-full max-w-2xl px-4 pb-2 pt-10">
-        <h1 className="text-2xl font-semibold tracking-tight sm:text-3xl">
-          What’s catching people’s eyes
-        </h1>
-        <p className="mt-2 text-muted-foreground">
-          A “lookmark” is a 👀 reaction, reply, or quote on a note.{' '}
-          <Link
-            to="/what"
-            className="underline decoration-border underline-offset-4 hover:decoration-foreground/50"
-          >
-            Learn more.
-          </Link>
-        </p>
-      </section>
-
       <main className="mx-auto w-full max-w-2xl flex-1 px-4 py-8">
         <LookmarkFeed />
       </main>
