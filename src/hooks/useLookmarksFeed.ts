@@ -44,8 +44,10 @@ export interface LookmarksFeed {
   hasMore: boolean;
   error: boolean;
   relays: string[];
-  /** Most-used reaction emojis, for the filter bar. */
+  /** Most-used native reaction emojis, for the filter bar. */
   emojiBar: EmojiCount[];
+  /** Most-used NIP-30 custom reaction emojis, for a separate filter bar. */
+  customEmojiBar: EmojiCount[];
   selectedEmoji: ReactionEmoji;
   selectEmoji: (emoji: ReactionEmoji) => void;
   loadMore: () => void;
@@ -84,8 +86,24 @@ function buildGroups(lookmarkEvents: NostrEvent[]): LookmarkedEvent[] {
   return results;
 }
 
-/** Tallies reaction emojis, always keeping 👀 and the selected emoji present. */
-function buildEmojiBar(events: NostrEvent[], selected: ReactionEmoji): EmojiCount[] {
+/** Keeps the selected emoji visible in a sliced list if it belongs to it. */
+function ensureSelected(top: EmojiCount[], selected: ReactionEmoji, full: EmojiCount[]): EmojiCount[] {
+  if (top.some((c) => c.emoji.key === selected.key)) return top;
+  const sel = full.find((c) => c.emoji.key === selected.key);
+  if (!sel) return top;
+  const copy = [...top];
+  copy[copy.length - 1] = sel;
+  return copy;
+}
+
+/**
+ * Tallies reaction emojis, split into native and NIP-30 custom emoji bars.
+ * Always keeps 👀 in the native bar and the selected emoji in its own bar.
+ */
+function buildEmojiBars(
+  events: NostrEvent[],
+  selected: ReactionEmoji,
+): { native: EmojiCount[]; custom: EmojiCount[] } {
   const counts = new Map<string, EmojiCount>();
   for (const event of events) {
     const emoji = getReactionEmoji(event);
@@ -97,13 +115,13 @@ function buildEmojiBar(events: NostrEvent[], selected: ReactionEmoji): EmojiCoun
   if (!counts.has(DEFAULT_EMOJI.key)) counts.set(DEFAULT_EMOJI.key, { emoji: DEFAULT_EMOJI, count: 0 });
   if (!counts.has(selected.key)) counts.set(selected.key, { emoji: selected, count: 0 });
 
-  const sorted = [...counts.values()].sort((a, b) => b.count - a.count);
-  const top = sorted.slice(0, MAX_EMOJIS);
-  if (!top.some((c) => c.emoji.key === selected.key)) {
-    const sel = sorted.find((c) => c.emoji.key === selected.key);
-    if (sel) top[top.length - 1] = sel;
-  }
-  return top;
+  const all = [...counts.values()].sort((a, b) => b.count - a.count);
+  const native = all.filter((c) => !c.emoji.url);
+  const custom = all.filter((c) => c.emoji.url);
+  return {
+    native: ensureSelected(native.slice(0, MAX_EMOJIS), selected, native),
+    custom: ensureSelected(custom.slice(0, MAX_EMOJIS), selected, custom),
+  };
 }
 
 /**
@@ -352,7 +370,10 @@ export function useLookmarksFeed(pubkey?: string): LookmarksFeed {
     [matched, lastInsert],
   );
 
-  const emojiBar = useMemo(() => buildEmojiBar(events, selectedEmoji), [events, selectedEmoji]);
+  const { native: emojiBar, custom: customEmojiBar } = useMemo(
+    () => buildEmojiBars(events, selectedEmoji),
+    [events, selectedEmoji],
+  );
 
   const loadMore = useCallback(() => {
     if (!hasMore) return;
@@ -370,6 +391,7 @@ export function useLookmarksFeed(pubkey?: string): LookmarksFeed {
     error,
     relays,
     emojiBar,
+    customEmojiBar,
     selectedEmoji,
     selectEmoji,
     loadMore,

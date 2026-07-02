@@ -17,13 +17,14 @@ export function LookmarkFeed({ pubkey }: { pubkey?: string }) {
     error,
     relays,
     emojiBar,
+    customEmojiBar,
     selectedEmoji,
     selectEmoji,
     loadMore,
     refresh,
   } = useLookmarksFeed(pubkey);
 
-  const emoji = selectedEmoji.native ?? selectedEmoji.shortcode ?? selectedEmoji.key;
+  const emoji = selectedEmoji.native ?? selectedEmoji.key;
   const isEyes = selectedEmoji.key === EYES_EMOJI;
   const noun = isEyes ? 'lookmark' : 'reaction';
 
@@ -124,7 +125,14 @@ export function LookmarkFeed({ pubkey }: { pubkey?: string }) {
 
   return (
     <div className="space-y-4">
-      <EmojiBar emojis={emojiBar} selected={selectedEmoji} onSelect={selectEmoji} />
+      <div className="space-y-2">
+        <EmojiBar emojis={emojiBar} selected={selectedEmoji} onSelect={selectEmoji} />
+        {customEmojiBar.length > 0 && (
+          <div className="border-t border-border/40 pt-2">
+            <EmojiBar emojis={customEmojiBar} selected={selectedEmoji} onSelect={selectEmoji} />
+          </div>
+        )}
+      </div>
       {content}
     </div>
   );
