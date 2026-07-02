@@ -1,7 +1,6 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { use$ } from 'applesauce-react/hooks';
-import { createTimelineLoader } from 'applesauce-loaders/loaders';
-import type { NostrEvent } from 'nostr-tools';
+import type { Filter, NostrEvent } from 'nostr-tools';
 import type { Subscription } from 'rxjs';
 
 import { addressLoader, eventLoader, eventStore, pool } from '@/nostr/core';
@@ -65,26 +64,12 @@ function buildGroups(lookmarkEvents: NostrEvent[]): LookmarkedEvent[] {
  * point at using applesauce loaders (relay hints + general + lookup relays), so
  * targets are found no matter which relay they live on. Pass a pubkey to show
  * only that user's lookmarks.
+ *
+ * Discovery queries the relay pool directly rather than via `createTimelineLoader`,
+ * because the timeline loader's `mergeFilters` strips the NIP-50 `search` field.
  */
 export function useLookmarksFeed(pubkey?: string): LookmarksFeed {
   const [epoch, setEpoch] = useState(0);
-
-  const loader = useMemo(
-    () =>
-      createTimelineLoader(
-        pool,
-        SEARCH_RELAYS,
-        [
-          { kinds: [1], search: EYES_EMOJI },
-          { kinds: [7], search: EYES_EMOJI },
-        ],
-        { eventStore, limit: PAGE_SIZE },
-      ),
-    // Recreated only on refresh; the author filter is applied client-side.
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-    [epoch],
-  );
-
   const [lookmarkEvents, setLookmarkEvents] = useState<NostrEvent[]>([]);
   const [loading, setLoading] = useState(true);
   const [loadingMore, setLoadingMore] = useState(false);
@@ -95,6 +80,7 @@ export function useLookmarksFeed(pubkey?: string): LookmarksFeed {
   const requestedTargets = useRef<Set<string>>(new Set());
   const activeSubs = useRef<Subscription[]>([]);
   const runningRef = useRef(false);
+  const oldestRef = useRef<number | undefined>(undefined);
 
   // Re-render as the store changes so newly resolved targets appear in the feed.
   const lastInsert = use$(() => eventStore.insert$, []);
@@ -126,43 +112,59 @@ export function useLookmarksFeed(pubkey?: string): LookmarksFeed {
     }
   }, []);
 
-  const runLoad = useCallback(() => {
-    if (runningRef.current) return;
-    runningRef.current = true;
+  const runLoad = useCallback(
+    (until?: number) => {
+      if (runningRef.current) return;
+      runningRef.current = true;
 
-    setError(false);
-    setLoadingMore(seenLookmarks.current.size > 0);
+      setError(false);
+      setLoadingMore(seenLookmarks.current.size > 0);
 
-    let raw = 0;
-    const sub = loader().subscribe({
-      next: (event) => {
-        raw += 1;
-        if (!isLookmark(event, pubkey)) return;
-        if (seenLookmarks.current.has(event.id)) return;
-        seenLookmarks.current.add(event.id);
-        setLookmarkEvents((prev) => [...prev, event]);
-        resolveTarget(event);
-      },
-      complete: () => {
+      const base: Filter = { search: EYES_EMOJI, limit: PAGE_SIZE };
+      if (until !== undefined) base.until = until;
+      const filters: Filter[] = [
+        { kinds: [1], ...base },
+        { kinds: [7], ...base },
+      ];
+
+      let raw = 0;
+      const finish = () => {
         runningRef.current = false;
         setLoading(false);
         setLoadingMore(false);
-        if (raw === 0) setHasMore(false);
-      },
-      error: () => {
-        runningRef.current = false;
-        setLoading(false);
-        setLoadingMore(false);
-        setError(true);
-      },
-    });
-    activeSubs.current.push(sub);
-  }, [loader, pubkey, resolveTarget]);
+      };
 
-  // Reset state and load the first page when the loader or target user changes.
+      const sub = pool.request(SEARCH_RELAYS, filters, { eventStore }).subscribe({
+        next: (event) => {
+          raw += 1;
+          if (oldestRef.current === undefined || event.created_at < oldestRef.current) {
+            oldestRef.current = event.created_at;
+          }
+          if (!isLookmark(event, pubkey)) return;
+          if (seenLookmarks.current.has(event.id)) return;
+          seenLookmarks.current.add(event.id);
+          setLookmarkEvents((prev) => [...prev, event]);
+          resolveTarget(event);
+        },
+        complete: () => {
+          finish();
+          if (raw === 0) setHasMore(false);
+        },
+        error: () => {
+          finish();
+          setError(true);
+        },
+      });
+      activeSubs.current.push(sub);
+    },
+    [pubkey, resolveTarget],
+  );
+
+  // Reset state and load the first page when the target user changes or on refresh.
   useEffect(() => {
     seenLookmarks.current = new Set();
     requestedTargets.current = new Set();
+    oldestRef.current = undefined;
     runningRef.current = false;
     setLookmarkEvents([]);
     setLoading(true);
@@ -176,7 +178,7 @@ export function useLookmarksFeed(pubkey?: string): LookmarksFeed {
       activeSubs.current = [];
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [loader, pubkey]);
+  }, [pubkey, epoch]);
 
   const lookmarks = useMemo(
     () => buildGroups(lookmarkEvents),
@@ -187,7 +189,8 @@ export function useLookmarksFeed(pubkey?: string): LookmarksFeed {
 
   const loadMore = useCallback(() => {
     if (!hasMore || runningRef.current) return;
-    runLoad();
+    const until = oldestRef.current !== undefined ? oldestRef.current - 1 : undefined;
+    runLoad(until);
   }, [hasMore, runLoad]);
 
   const refresh = useCallback(() => setEpoch((e) => e + 1), []);

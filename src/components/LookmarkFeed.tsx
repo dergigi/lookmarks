@@ -28,7 +28,7 @@ export function LookmarkFeed({ pubkey }: { pubkey?: string }) {
   const { lookmarks, loading, loadingMore, hasMore, error, loadMore, refresh } =
     useLookmarksFeed(pubkey);
 
-  if (loading) {
+  if (lookmarks.length === 0 && loading) {
     return (
       <div className="space-y-4">
         {Array.from({ length: 4 }).map((_, i) => (
