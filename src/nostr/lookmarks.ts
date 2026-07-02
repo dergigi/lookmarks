@@ -1,3 +1,4 @@
+import { getEmojiFromTags } from 'applesauce-common/helpers/emoji';
 import type { NostrEvent } from 'nostr-tools';
 
 /** The default emoji: 👀, "worth a look". */
@@ -44,7 +45,11 @@ export function isReferentialEvent(event: NostrEvent): boolean {
   return event.tags.some(([name]) => name === 'q' || name === 'e' || name === 'a');
 }
 
-/** Extracts the emoji a kind 7 reaction represents, or null for +/-/non-emoji. */
+/**
+ * Extracts the emoji a kind 7 reaction represents (NIP-25 native emoji or
+ * NIP-30 custom emoji), or null for +/-/non-emoji reactions. Custom emoji keys
+ * are normalized to a lowercased ":shortcode:" so matching is case-insensitive.
+ */
 export function getReactionEmoji(event: NostrEvent): ReactionEmoji | null {
   if (event.kind !== 7) return null;
   const content = event.content.trim();
@@ -52,9 +57,9 @@ export function getReactionEmoji(event: NostrEvent): ReactionEmoji | null {
 
   const custom = content.match(CUSTOM_EMOJI_RE);
   if (custom) {
-    const shortcode = custom[1];
-    const url = event.tags.find(([n, code]) => n === 'emoji' && code === shortcode)?.[2];
-    return url ? { key: content, shortcode, url } : null;
+    const emoji = getEmojiFromTags(event, custom[1]);
+    if (!emoji?.url) return null;
+    return { key: `:${emoji.shortcode.toLowerCase()}:`, shortcode: emoji.shortcode, url: emoji.url };
   }
 
   if (EMOJI_RE.test(content) && content.length <= 16) return { key: content, native: content };
@@ -63,9 +68,11 @@ export function getReactionEmoji(event: NostrEvent): ReactionEmoji | null {
 
 /** Whether an event is a lookmark for the given emoji (reaction, or referential note). */
 export function matchesEmoji(event: NostrEvent, emoji: ReactionEmoji): boolean {
-  if (event.kind === 7) return event.content.trim() === emoji.key;
+  if (event.kind === 7) return getReactionEmoji(event)?.key === emoji.key;
   if (event.kind === 1) {
-    return isReferentialEvent(event) && event.content.includes(emoji.native ?? emoji.key);
+    if (!isReferentialEvent(event)) return false;
+    if (emoji.shortcode) return event.content.toLowerCase().includes(`:${emoji.shortcode.toLowerCase()}:`);
+    return event.content.includes(emoji.native ?? emoji.key);
   }
   return false;
 }
