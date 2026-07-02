@@ -1,189 +1,119 @@
-import { useMemo } from 'react';
-import { Eye, Loader2, AlertCircle, RefreshCw, ChevronDown } from 'lucide-react';
-import { Card, CardContent } from '@/components/ui/card';
-import { Skeleton } from '@/components/ui/skeleton';
+import { ChevronDown, Eye, Loader2, RefreshCw } from 'lucide-react';
+
 import { Button } from '@/components/ui/button';
+import { Skeleton } from '@/components/ui/skeleton';
 import { LookmarkCard } from '@/components/LookmarkCard';
 import { ConnectedRelaysPill } from '@/components/ConnectedRelaysPill';
-import { useLookmarks, type LookmarkedEvent } from '@/hooks/useLookmarks';
+import { useLookmarksFeed } from '@/hooks/useLookmarksFeed';
 
-interface LookmarkFeedProps {
-  pubkey?: string;
-}
-
-function LookmarkSkeleton() {
+function CardSkeleton() {
   return (
-    <Card className="border-border/50 bg-card/50">
-      <div className="p-4">
-        <div className="flex items-center gap-3 mb-4">
-          <Skeleton className="h-10 w-10 rounded-full" />
-          <div className="space-y-2 flex-1">
-            <Skeleton className="h-4 w-32" />
-            <Skeleton className="h-3 w-24" />
-          </div>
-          <Skeleton className="h-3 w-16" />
-        </div>
-        <div className="space-y-2">
-          <Skeleton className="h-4 w-full" />
-          <Skeleton className="h-4 w-5/6" />
-          <Skeleton className="h-4 w-4/6" />
-        </div>
-        <div className="flex items-center gap-2 mt-4 pt-3 border-t border-border/30">
-          <Skeleton className="h-6 w-16 rounded-full" />
-          <Skeleton className="h-3 w-24" />
+    <div className="rounded-xl border border-border bg-card p-4">
+      <div className="mb-3 flex items-center gap-3">
+        <Skeleton className="h-9 w-9 rounded-full" />
+        <div className="flex-1 space-y-2">
+          <Skeleton className="h-4 w-32" />
+          <Skeleton className="h-3 w-20" />
         </div>
       </div>
-    </Card>
+      <div className="space-y-2">
+        <Skeleton className="h-4 w-full" />
+        <Skeleton className="h-4 w-4/5" />
+      </div>
+    </div>
   );
 }
 
-export function LookmarkFeed({ pubkey }: LookmarkFeedProps) {
-  const {
-    data,
-    isLoading,
-    error,
-    refetch,
-    isFetching,
-    fetchNextPage,
-    hasNextPage,
-    isFetchingNextPage,
-  } = useLookmarks(pubkey);
+export function LookmarkFeed({ pubkey }: { pubkey?: string }) {
+  const { lookmarks, loading, loadingMore, hasMore, error, loadMore, refresh } =
+    useLookmarksFeed(pubkey);
 
-  // Flatten pages and deduplicate by event ID
-  const lookmarks = useMemo((): LookmarkedEvent[] => {
-    if (!data?.pages) return [];
-
-    const seen = new Set<string>();
-    const results: LookmarkedEvent[] = [];
-
-    for (const page of data.pages) {
-      if (!page?.lookmarkedEvents) continue;
-      for (const item of page.lookmarkedEvents) {
-        if (!seen.has(item.event.id)) {
-          seen.add(item.event.id);
-          results.push(item);
-        }
-      }
-    }
-
-    // Sort all results by most recent lookmark
-    results.sort((a, b) => b.latestLookmarkAt - a.latestLookmarkAt);
-
-    return results;
-  }, [data?.pages]);
-
-  if (isLoading) {
+  if (loading) {
     return (
       <div className="space-y-4">
-        <div className="flex items-center justify-center gap-2 text-muted-foreground py-4">
-          <Loader2 className="h-5 w-5 animate-spin" />
-          <span>Looking for 👀 lookmarks...</span>
-        </div>
-        {Array.from({ length: 5 }).map((_, i) => (
-          <LookmarkSkeleton key={i} />
+        {Array.from({ length: 4 }).map((_, i) => (
+          <CardSkeleton key={i} />
         ))}
       </div>
     );
   }
 
-  if (error) {
+  if (error && lookmarks.length === 0) {
     return (
-      <Card className="border-destructive/50 bg-destructive/5">
-        <CardContent className="py-12 px-8 text-center">
-          <AlertCircle className="h-12 w-12 mx-auto text-destructive/70 mb-4" />
-          <h3 className="text-lg font-medium text-destructive mb-2">Failed to load lookmarks</h3>
-          <p className="text-sm text-muted-foreground mb-4">
-            There was an error fetching lookmarked events. Please try again.
-          </p>
-          <Button variant="outline" onClick={() => refetch()}>
-            <RefreshCw className="h-4 w-4 mr-2" />
-            Try Again
-          </Button>
-        </CardContent>
-      </Card>
+      <div className="rounded-xl border border-dashed border-border py-14 text-center">
+        <p className="mb-4 text-sm text-muted-foreground">
+          Something went wrong while loading lookmarks.
+        </p>
+        <Button variant="outline" size="sm" onClick={refresh}>
+          <RefreshCw className="mr-2 h-4 w-4" />
+          Try again
+        </Button>
+      </div>
     );
   }
 
   if (lookmarks.length === 0) {
     return (
-      <Card className="border-dashed border-2 bg-card/30">
-        <CardContent className="py-16 px-8 text-center">
-          <div className="w-16 h-16 mx-auto mb-6 rounded-full bg-gradient-to-br from-amber-500/20 to-orange-500/20 flex items-center justify-center">
-            <Eye className="h-8 w-8 text-amber-500" />
-          </div>
-          <h3 className="text-xl font-semibold mb-2">No lookmarks found</h3>
-          <p className="text-muted-foreground max-w-sm mx-auto">
-            {pubkey
-              ? "This user hasn't lookmarked any events with 👀 yet."
-              : "No events with 👀 reactions were found. Try checking your relay connections or come back later."
-            }
-          </p>
-        </CardContent>
-      </Card>
+      <div className="rounded-xl border border-dashed border-border py-16 text-center">
+        <Eye className="mx-auto mb-4 h-8 w-8 text-muted-foreground" />
+        <p className="mx-auto max-w-sm text-sm text-muted-foreground">
+          {pubkey
+            ? "No lookmarks found for this user yet."
+            : "No lookmarks found yet. Check back in a moment."}
+        </p>
+        {hasMore && (
+          <Button variant="ghost" size="sm" className="mt-4" onClick={loadMore}>
+            Keep looking
+          </Button>
+        )}
+      </div>
     );
   }
 
   return (
     <div className="space-y-4">
-      <div className="flex items-center justify-between">
-        <p className="text-sm text-muted-foreground">
-          Found{' '}
-          <span className="font-semibold text-foreground">{lookmarks.length}</span>
-          {' '}
-          lookmarks across <ConnectedRelaysPill className="align-baseline" />
-        </p>
-        <Button
-          variant="ghost"
-          size="sm"
-          onClick={() => refetch()}
-          disabled={isFetching}
-          className="text-xs"
-        >
-          {isFetching && !isFetchingNextPage ? (
-            <Loader2 className="h-3 w-3 mr-1 animate-spin" />
-          ) : (
-            <RefreshCw className="h-3 w-3 mr-1" />
-          )}
+      <div className="flex items-center justify-between text-sm text-muted-foreground">
+        <span>
+          {lookmarks.length} lookmarked across <ConnectedRelaysPill />
+        </span>
+        <Button variant="ghost" size="sm" className="text-xs" onClick={refresh}>
+          <RefreshCw className="mr-1 h-3 w-3" />
           Refresh
         </Button>
       </div>
 
-      <div className="grid gap-4">
-        {lookmarks.map((lookmarkedEvent) => (
-          <LookmarkCard key={lookmarkedEvent.event.id} lookmarkedEvent={lookmarkedEvent} />
+      <div className="space-y-4">
+        {lookmarks.map((item) => (
+          <LookmarkCard key={item.event.id} lookmarkedEvent={item} />
         ))}
       </div>
 
-      {/* Load More Button */}
-      {hasNextPage && (
-        <div className="flex justify-center pt-4">
+      {hasMore ? (
+        <div className="flex justify-center pt-2">
           <Button
             variant="outline"
-            onClick={() => fetchNextPage()}
-            disabled={isFetchingNextPage}
             className="w-full max-w-xs"
+            onClick={loadMore}
+            disabled={loadingMore}
           >
-            {isFetchingNextPage ? (
+            {loadingMore ? (
               <>
-                <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
                 Loading more...
               </>
             ) : (
               <>
-                <ChevronDown className="h-4 w-4 mr-2" />
+                <ChevronDown className="mr-2 h-4 w-4" />
                 Load more
               </>
             )}
           </Button>
         </div>
-      )}
-
-      {/* End of results indicator */}
-      {!hasNextPage && lookmarks.length > 0 && (
-        <div className="text-center py-6 text-sm text-muted-foreground">
-          <Eye className="h-4 w-4 inline-block mr-1 opacity-50" />
-          You've seen all the lookmarks!
-        </div>
+      ) : (
+        <p className="py-6 text-center text-sm text-muted-foreground">
+          <Eye className="mr-1 inline-block h-4 w-4 opacity-50" />
+          That's all the lookmarks.
+        </p>
       )}
     </div>
   );

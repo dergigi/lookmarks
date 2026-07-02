@@ -1,218 +1,115 @@
 import { nip19 } from 'nostr-tools';
-import { ExternalLink, Clock, MessageSquare, Heart, Repeat, Eye } from 'lucide-react';
-import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import { faMobileScreen } from '@fortawesome/free-solid-svg-icons';
 import { Link } from 'react-router-dom';
-import { Card, CardContent, CardFooter, CardHeader } from '@/components/ui/card';
-import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
-import { Button } from '@/components/ui/button';
-import { NoteContent } from '@/components/NoteContent';
-import { useAuthor } from '@/hooks/useAuthor';
-import { formatTimestamp } from '@/lib/formatTimestamp';
-import { genUserName } from '@/lib/genUserName';
-import { getLookmarkType, type LookmarkedEvent } from '@/hooks/useLookmarks';
+import { ExternalLink, Heart, MessageSquare, Repeat } from 'lucide-react';
 
-interface LookmarkCardProps {
-  lookmarkedEvent: LookmarkedEvent;
+import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
+import { NoteBody } from '@/components/NoteBody';
+import { useProfile } from '@/hooks/useProfile';
+import { formatTimestamp } from '@/lib/formatTimestamp';
+import { getLookmarkType, type LookmarkedEvent } from '@/nostr/lookmarks';
+
+function useCounts(lookmarks: LookmarkedEvent['lookmarks']) {
+  let reaction = 0;
+  let reply = 0;
+  let quote = 0;
+  for (const lm of lookmarks) {
+    const t = getLookmarkType(lm);
+    if (t === 'reaction') reaction += 1;
+    else if (t === 'reply') reply += 1;
+    else quote += 1;
+  }
+  return { reaction, reply, quote };
 }
 
-export function LookmarkCard({ lookmarkedEvent }: LookmarkCardProps) {
+export function LookmarkCard({ lookmarkedEvent }: { lookmarkedEvent: LookmarkedEvent }) {
   const { event, lookmarks, latestLookmarkAt } = lookmarkedEvent;
-  const author = useAuthor(event.pubkey);
-  
+  const author = useProfile(event.pubkey);
+
+  const npub = nip19.npubEncode(event.pubkey);
   const nevent = nip19.neventEncode({ id: event.id, author: event.pubkey });
-  
-  const displayName = author.data?.metadata?.name || genUserName(event.pubkey);
-  const avatar = author.data?.metadata?.picture;
-  const nip05 = author.data?.metadata?.nip05;
-  
-  // Find the most recent lookmark event
-  const latestLookmark = lookmarks.find(l => l.created_at === latestLookmarkAt) || lookmarks[0];
-  const latestLookmarkAuthor = useAuthor(latestLookmark?.pubkey);
-  const latestLookmarkDisplayName = latestLookmarkAuthor.data?.metadata?.name 
-    || (latestLookmark ? genUserName(latestLookmark.pubkey) : '');
-  const latestLookmarkNpub = latestLookmark ? nip19.npubEncode(latestLookmark.pubkey) : undefined;
 
-  const { reactionCount, replyCount, quoteCount, latestReaction, latestReply, latestQuote } = (() => {
-    let reactionCount = 0;
-    let replyCount = 0;
-    let quoteCount = 0;
-    let latestReaction: LookmarkedEvent['lookmarks'][number] | undefined;
-    let latestReply: LookmarkedEvent['lookmarks'][number] | undefined;
-    let latestQuote: LookmarkedEvent['lookmarks'][number] | undefined;
+  const latest = lookmarks.reduce((a, b) => (b.created_at > a.created_at ? b : a), lookmarks[0]);
+  const latestAuthor = useProfile(latest?.pubkey);
+  const latestNpub = latest ? nip19.npubEncode(latest.pubkey) : undefined;
 
-    for (const lm of lookmarks) {
-      const t = getLookmarkType(lm);
-      if (t === 'reaction') {
-        reactionCount += 1;
-        if (!latestReaction || lm.created_at > latestReaction.created_at) latestReaction = lm;
-      } else if (t === 'reply') {
-        replyCount += 1;
-        if (!latestReply || lm.created_at > latestReply.created_at) latestReply = lm;
-      } else {
-        quoteCount += 1;
-        if (!latestQuote || lm.created_at > latestQuote.created_at) latestQuote = lm;
-      }
-    }
-
-    return { reactionCount, replyCount, quoteCount, latestReaction, latestReply, latestQuote };
-  })();
-  
-  const handleOpenNjump = () => {
-    window.open(`https://njump.to/${nevent}`, '_blank', 'noopener,noreferrer');
-  };
-
-  const handleOpenLookmarkNjump = (
-    e: React.MouseEvent,
-    lookmark: LookmarkedEvent['lookmarks'][number] | undefined
-  ) => {
-    e.preventDefault();
-    e.stopPropagation();
-    if (!lookmark) return;
-    const lookmarkNevent = nip19.neventEncode({ id: lookmark.id, author: lookmark.pubkey });
-    window.open(`https://njump.to/${lookmarkNevent}`, '_blank', 'noopener,noreferrer');
-  };
-
-  const handleOpenNative = () => {
-    window.open(`nostr:${nevent}`, '_self');
-  };
+  const counts = useCounts(lookmarks);
 
   return (
-    <Card className="group transition-all duration-300 hover:shadow-lg hover:shadow-primary/5 border-border/50 hover:border-border bg-card/50 backdrop-blur-sm overflow-hidden">
-      <CardHeader className="pb-3">
-        <div className="flex items-start justify-between gap-3">
-          <Link to={`/p/${nip19.npubEncode(event.pubkey)}`} className="flex items-center gap-3 min-w-0 group/author">
-            <Avatar className="h-10 w-10 ring-2 ring-background shadow-sm shrink-0">
-              <AvatarImage src={avatar} alt={displayName} />
-              <AvatarFallback className="bg-gradient-to-br from-primary/20 to-primary/10 text-primary font-medium">
-                {displayName.slice(0, 2).toUpperCase()}
-              </AvatarFallback>
-            </Avatar>
-            <div className="min-w-0 flex-1">
-              <div className="flex items-center gap-2 flex-wrap">
-                <span className="font-semibold text-foreground truncate max-w-[200px] group-hover/author:underline">
-                  {displayName}
-                </span>
-              </div>
-              {nip05 && (
-                <span className="text-xs text-muted-foreground truncate block max-w-[250px]">
-                  {nip05}
-                </span>
-              )}
+    <article className="rounded-xl border border-border bg-card p-4 transition-colors hover:border-foreground/20">
+      <div className="mb-3 flex items-center gap-3">
+        <Link to={`/p/${npub}`} className="flex min-w-0 items-center gap-3 group">
+          <Avatar className="h-9 w-9 shrink-0">
+            <AvatarImage src={author.picture} alt={author.displayName} />
+            <AvatarFallback>{author.displayName.slice(0, 2).toUpperCase()}</AvatarFallback>
+          </Avatar>
+          <div className="min-w-0">
+            <div className="truncate font-medium text-foreground group-hover:underline">
+              {author.displayName}
             </div>
-          </Link>
-          <button
-            onClick={handleOpenNjump}
-            className="flex items-center gap-1 text-xs text-muted-foreground shrink-0 hover:text-foreground transition-colors cursor-pointer"
-            title="Open in njump.to"
-          >
-            <Clock className="h-3 w-3" />
-            <span>{formatTimestamp(event.created_at)}</span>
-          </button>
-        </div>
-      </CardHeader>
-      
-      <CardContent className="pb-3">
-        <div className="text-sm text-foreground/90">
-          <NoteContent event={event} className="line-clamp-[12]" />
-        </div>
-      </CardContent>
-      
-      <CardFooter className="flex items-center justify-between border-t border-border/30 mt-2 pt-3 flex-wrap gap-2">
-        <div className="flex items-center gap-3 flex-wrap">
-          {/* Lookmark stats */}
-          <div className="flex items-center gap-2 text-xs text-muted-foreground">
-            {reactionCount > 0 && (
-              <button
-                type="button"
-                onClick={(e) => handleOpenLookmarkNjump(e, latestReaction)}
-                className="inline-flex items-center gap-1 rounded-full border border-border/50 bg-muted/40 px-2 py-1 transition-colors hover:bg-muted/70 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-amber-500/40"
-                title="Open most recent 👀 reaction lookmark in njump.to"
-                aria-label="Open most recent reaction lookmark in njump.to"
-              >
-                <Eye className="h-3 w-3 text-muted-foreground" />
-                <Heart className="h-3 w-3" />
-                <span className="font-medium text-foreground">{reactionCount}</span>
-              </button>
-            )}
-            
-            {replyCount > 0 && (
-              <button
-                type="button"
-                onClick={(e) => handleOpenLookmarkNjump(e, latestReply)}
-                className="inline-flex items-center gap-1 rounded-full border border-border/50 bg-muted/40 px-2 py-1 transition-colors hover:bg-muted/70 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-amber-500/40"
-                title="Open most recent 👀 reply lookmark in njump.to"
-                aria-label="Open most recent reply lookmark in njump.to"
-              >
-                <Eye className="h-3 w-3 text-muted-foreground" />
-                <MessageSquare className="h-3 w-3" />
-                <span className="font-medium text-foreground">{replyCount}</span>
-              </button>
-            )}
-            
-            {quoteCount > 0 && (
-              <button
-                type="button"
-                onClick={(e) => handleOpenLookmarkNjump(e, latestQuote)}
-                className="inline-flex items-center gap-1 rounded-full border border-border/50 bg-muted/40 px-2 py-1 transition-colors hover:bg-muted/70 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-amber-500/40"
-                title="Open most recent 👀 quote lookmark in njump.to"
-                aria-label="Open most recent quote lookmark in njump.to"
-              >
-                <Eye className="h-3 w-3 text-muted-foreground" />
-                <Repeat className="h-3 w-3" />
-                <span className="font-medium text-foreground">{quoteCount}</span>
-              </button>
+            {author.nip05 && (
+              <div className="truncate text-xs text-muted-foreground">{author.nip05}</div>
             )}
           </div>
-          
-          {latestLookmark && latestLookmarkDisplayName ? (
-            <span className="text-xs text-muted-foreground">
-              by{' '}
-              {latestLookmarkNpub ? (
-                <Link
-                  to={`/p/${latestLookmarkNpub}`}
-                  className="font-medium text-foreground hover:underline"
-                >
-                  {latestLookmarkDisplayName}
-                </Link>
-              ) : (
-                <span className="font-medium text-foreground">
-                  {latestLookmarkDisplayName}
-                </span>
-              )}{' '}
-              {formatTimestamp(latestLookmarkAt)}
+        </Link>
+        <a
+          href={`https://njump.me/${nevent}`}
+          target="_blank"
+          rel="noopener noreferrer"
+          className="ml-auto shrink-0 text-xs text-muted-foreground hover:text-foreground"
+          title="Open note"
+        >
+          {formatTimestamp(event.created_at)}
+        </a>
+      </div>
+
+      <NoteBody event={event} className="text-sm text-foreground/90 line-clamp-[12]" />
+
+      <div className="mt-4 flex flex-wrap items-center gap-x-3 gap-y-2 border-t border-border/60 pt-3 text-xs text-muted-foreground">
+        <div className="flex items-center gap-3">
+          {counts.reaction > 0 && (
+            <span className="inline-flex items-center gap-1" title="👀 reactions">
+              <Heart className="h-3.5 w-3.5" />
+              {counts.reaction}
             </span>
-          ) : (
-            <span className="text-xs text-muted-foreground">
-              Last 👀 {formatTimestamp(latestLookmarkAt)}
+          )}
+          {counts.reply > 0 && (
+            <span className="inline-flex items-center gap-1" title="👀 replies">
+              <MessageSquare className="h-3.5 w-3.5" />
+              {counts.reply}
+            </span>
+          )}
+          {counts.quote > 0 && (
+            <span className="inline-flex items-center gap-1" title="👀 quotes">
+              <Repeat className="h-3.5 w-3.5" />
+              {counts.quote}
             </span>
           )}
         </div>
-        
-        <div className="flex items-center gap-1">
-          <Button
-            variant="ghost"
-            size="sm"
-            className="h-8 w-8 p-0"
-            onClick={handleOpenNjump}
-            aria-label="Open in njump.to"
-            title="Open in njump.to"
-          >
-            <ExternalLink className="h-3.5 w-3.5" />
-          </Button>
-          
-          <Button
-            variant="ghost"
-            size="sm"
-            className="h-8 w-8 p-0"
-            onClick={handleOpenNative}
-            aria-label="Open in your Nostr client"
-            title="Open in your Nostr client"
-          >
-            <FontAwesomeIcon icon={faMobileScreen} className="h-3.5 w-3.5" />
-          </Button>
-        </div>
-      </CardFooter>
-    </Card>
+
+        {latest && (
+          <span className="truncate">
+            👀 by{' '}
+            {latestNpub ? (
+              <Link to={`/p/${latestNpub}`} className="font-medium text-foreground hover:underline">
+                {latestAuthor.displayName}
+              </Link>
+            ) : (
+              <span className="font-medium text-foreground">{latestAuthor.displayName}</span>
+            )}{' '}
+            {formatTimestamp(latestLookmarkAt)}
+          </span>
+        )}
+
+        <a
+          href={`https://njump.me/${nevent}`}
+          target="_blank"
+          rel="noopener noreferrer"
+          className="ml-auto inline-flex items-center gap-1 hover:text-foreground"
+          title="Open in njump.me"
+        >
+          <ExternalLink className="h-3.5 w-3.5" />
+        </a>
+      </div>
+    </article>
   );
 }
