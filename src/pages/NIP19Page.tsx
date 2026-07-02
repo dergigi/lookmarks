@@ -1,291 +1,127 @@
-import { useMemo } from 'react';
 import { nip19 } from 'nostr-tools';
-import { useNavigate, useParams } from 'react-router-dom';
-import { ArrowLeft, ExternalLink, Loader2, Eye, Heart, MessageSquare, Repeat, Download } from 'lucide-react';
-import type { NostrEvent } from '@nostrify/nostrify';
-import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import { faMobileScreen } from '@fortawesome/free-solid-svg-icons';
+import { Link, useParams } from 'react-router-dom';
+import { use$ } from 'applesauce-react/hooks';
+import { ArrowLeft, ExternalLink } from 'lucide-react';
+import type { NostrEvent } from 'nostr-tools';
+
 import NotFound from './NotFound';
 import { LookmarkFeed } from '@/components/LookmarkFeed';
+import { NoteBody } from '@/components/NoteBody';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
-import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardHeader } from '@/components/ui/card';
 import { Skeleton } from '@/components/ui/skeleton';
-import { NoteContent } from '@/components/NoteContent';
-import { useAuthor } from '@/hooks/useAuthor';
-import { useEvent } from '@/hooks/useEvent';
-import { useAddressableEvent } from '@/hooks/useAddressableEvent';
-import { useLookmarks, getLookmarkType } from '@/hooks/useLookmarks';
-import { genUserName } from '@/lib/genUserName';
+import { useProfile } from '@/hooks/useProfile';
+import { eventStore } from '@/nostr/core';
 
 export function NIP19Page() {
   const { nip19: identifier } = useParams<{ nip19: string }>();
-  const navigate = useNavigate();
 
-  if (!identifier) {
-    return <NotFound />;
-  }
+  if (!identifier) return <NotFound />;
 
-  let decoded;
+  let decoded: nip19.DecodeResult;
   try {
     decoded = nip19.decode(identifier);
   } catch {
     return <NotFound />;
   }
 
-  const { type, data } = decoded;
-
-  switch (type) {
+  switch (decoded.type) {
     case 'npub':
+      return (
+        <PageShell>
+          <ProfileView pubkey={decoded.data} />
+        </PageShell>
+      );
     case 'nprofile':
       return (
-        <PageShell onBack={() => navigate('/')}>
-          <ProfileLookmarksView pubkey={type === 'npub' ? (data as string) : (data as { pubkey: string }).pubkey} />
+        <PageShell>
+          <ProfileView pubkey={decoded.data.pubkey} />
         </PageShell>
       );
-
     case 'note':
       return (
-        <PageShell onBack={() => navigate('/')}>
-          <EventView
-            eventId={data as string}
-            nip19Id={identifier}
-            kindHint="note"
-          />
+        <PageShell>
+          <EventView pointer={{ id: decoded.data }} nip19Id={identifier} />
         </PageShell>
       );
-
     case 'nevent':
       return (
-        <PageShell onBack={() => navigate('/')}>
-          <EventView
-            eventId={(data as { id: string }).id}
-            nip19Id={identifier}
-            kindHint="nevent"
-          />
+        <PageShell>
+          <EventView pointer={{ id: decoded.data.id }} nip19Id={identifier} />
         </PageShell>
       );
-
     case 'naddr':
       return (
-        <PageShell onBack={() => navigate('/')}>
-          <AddressableEventView
-            kind={(data as { kind: number }).kind}
-            pubkey={(data as { pubkey: string }).pubkey}
-            identifier={(data as { identifier: string }).identifier}
+        <PageShell>
+          <AddressableView
+            kind={decoded.data.kind}
+            pubkey={decoded.data.pubkey}
+            identifier={decoded.data.identifier}
             nip19Id={identifier}
           />
         </PageShell>
       );
-
     default:
       return <NotFound />;
   }
 }
 
-function PageShell({ onBack, children }: { onBack: () => void; children: React.ReactNode }) {
+function PageShell({ children }: { children: React.ReactNode }) {
   return (
-    <div className="flex flex-1 flex-col bg-gradient-to-b from-background via-background to-amber-500/5">
-      <header className="border-b border-border/40 backdrop-blur-sm bg-background/80 sticky top-0 z-50">
-        <div className="max-w-4xl mx-auto px-4 py-4 w-full">
-          <Button variant="ghost" size="icon" onClick={onBack} aria-label="Back" title="Back">
+    <div className="flex flex-1 flex-col bg-background">
+      <header className="sticky top-0 z-40 border-b border-border/60 bg-background/80 backdrop-blur">
+        <div className="mx-auto w-full max-w-2xl px-4 py-3">
+          <Link
+            to="/"
+            className="inline-flex items-center gap-2 text-sm text-muted-foreground hover:text-foreground"
+          >
             <ArrowLeft className="h-4 w-4" />
-          </Button>
+            Back
+          </Link>
         </div>
       </header>
-
-      <main className="max-w-4xl mx-auto px-4 py-8 w-full">
-        {children}
-      </main>
+      <main className="mx-auto w-full max-w-2xl flex-1 px-4 py-8">{children}</main>
     </div>
   );
 }
 
-function ProfileLookmarksView({ pubkey }: { pubkey: string }) {
+function ProfileView({ pubkey }: { pubkey: string }) {
   const npub = nip19.npubEncode(pubkey);
-  const author = useAuthor(pubkey);
-  const lookmarksQuery = useLookmarks(pubkey);
-  const { hasNextPage, fetchNextPage, isFetchingNextPage } = lookmarksQuery;
-
-  const displayName = author.data?.metadata?.name ?? genUserName(pubkey);
-  const avatar = author.data?.metadata?.picture;
-  const nip05 = author.data?.metadata?.nip05;
-  const npubShort = `${npub.slice(0, 12)}…${npub.slice(-8)}`;
-
-  // Calculate totals across all loaded pages
-  const { reactionCount, replyCount, quoteCount } = useMemo(() => {
-    let reactionCount = 0;
-    let replyCount = 0;
-    let quoteCount = 0;
-
-    const allEvents = lookmarksQuery.data?.pages.flatMap(p => p.lookmarkedEvents) ?? [];
-    for (const lookmarkedEvent of allEvents) {
-      for (const lm of lookmarkedEvent.lookmarks) {
-        const t = getLookmarkType(lm);
-        if (t === 'reaction') reactionCount += 1;
-        else if (t === 'reply') replyCount += 1;
-        else quoteCount += 1;
-      }
-    }
-
-    return { reactionCount, replyCount, quoteCount };
-  }, [lookmarksQuery.data?.pages]);
-
-  const hasStats = reactionCount > 0 || replyCount > 0 || quoteCount > 0;
+  const { displayName, picture, nip05 } = useProfile(pubkey);
+  const npubShort = `${npub.slice(0, 12)}…${npub.slice(-6)}`;
 
   return (
     <div className="space-y-6">
-      <Card className="border-border/50 bg-card/50">
-        <CardHeader className="pb-3">
-          <div className="flex items-center gap-3">
-            <div className="h-12 w-12 rounded-full bg-gradient-to-br from-amber-500/20 to-amber-600/10 flex items-center justify-center shrink-0">
-              <span className="text-2xl">👀</span>
-            </div>
-            {author.isLoading ? (
-              <Skeleton className="h-12 w-12 rounded-full" />
-            ) : (
-              <Avatar className="h-12 w-12">
-                <AvatarImage src={avatar} alt={displayName} />
-                <AvatarFallback className="bg-gradient-to-br from-primary/20 to-primary/10 text-primary font-medium">
-                  {displayName.slice(0, 2).toUpperCase()}
-                </AvatarFallback>
-              </Avatar>
-            )}
-
-            <div className="min-w-0 flex-1">
-              <div className="font-semibold text-foreground truncate">{displayName}</div>
-              {nip05 ? (
-                <div className="text-xs text-muted-foreground truncate">{nip05}</div>
-              ) : (
-                <div className="text-xs text-muted-foreground truncate">{npubShort}</div>
-              )}
-            </div>
-
-            <div className="flex items-center gap-1 shrink-0">
-              <Button
-                variant="ghost"
-                size="sm"
-                className="h-8 w-8 p-0"
-                onClick={() => window.open(`https://njump.to/${npub}`, '_blank', 'noopener,noreferrer')}
-                aria-label="Open profile in njump.to"
-                title="Open profile in njump.to"
-              >
-                <ExternalLink className="h-3.5 w-3.5" />
-              </Button>
-
-              <Button
-                variant="ghost"
-                size="sm"
-                className="h-8 w-8 p-0"
-                onClick={() => window.open(`nostr:${npub}`, '_self')}
-                aria-label="Open profile in your Nostr client"
-                title="Open profile in your Nostr client"
-              >
-                <FontAwesomeIcon icon={faMobileScreen} className="h-3.5 w-3.5" />
-              </Button>
-            </div>
-          </div>
-
-          {/* Lookmark stats pills */}
-          {(hasStats || hasNextPage) && (
-            <div className="flex items-center gap-2 mt-3 justify-end">
-              {reactionCount > 0 && (
-                <span className="inline-flex items-center gap-1 rounded-full border border-border/50 bg-muted/40 px-2 py-1 text-xs">
-                  <Eye className="h-3 w-3 text-muted-foreground" />
-                  <Heart className="h-3 w-3" />
-                  <span className="font-medium text-foreground">{reactionCount}</span>
-                </span>
-              )}
-              {replyCount > 0 && (
-                <span className="inline-flex items-center gap-1 rounded-full border border-border/50 bg-muted/40 px-2 py-1 text-xs">
-                  <Eye className="h-3 w-3 text-muted-foreground" />
-                  <MessageSquare className="h-3 w-3" />
-                  <span className="font-medium text-foreground">{replyCount}</span>
-                </span>
-              )}
-              {quoteCount > 0 && (
-                <span className="inline-flex items-center gap-1 rounded-full border border-border/50 bg-muted/40 px-2 py-1 text-xs">
-                  <Eye className="h-3 w-3 text-muted-foreground" />
-                  <Repeat className="h-3 w-3" />
-                  <span className="font-medium text-foreground">{quoteCount}</span>
-                </span>
-              )}
-              {hasNextPage && (
-                <button
-                  onClick={() => fetchNextPage()}
-                  disabled={isFetchingNextPage}
-                  className="inline-flex items-center gap-1 rounded-full border border-border/50 bg-muted/40 px-2 py-1 text-xs transition-colors hover:bg-muted/70 disabled:opacity-50"
-                >
-                  {isFetchingNextPage ? (
-                    <Loader2 className="h-3 w-3 animate-spin" />
-                  ) : (
-                    <Download className="h-3 w-3" />
-                  )}
-                  <span className="font-medium text-foreground">more</span>
-                </button>
-              )}
-            </div>
-          )}
-        </CardHeader>
-      </Card>
+      <div className="flex items-center gap-4">
+        <Avatar className="h-14 w-14">
+          <AvatarImage src={picture} alt={displayName} />
+          <AvatarFallback>{displayName.slice(0, 2).toUpperCase()}</AvatarFallback>
+        </Avatar>
+        <div className="min-w-0 flex-1">
+          <div className="truncate text-lg font-semibold text-foreground">{displayName}</div>
+          <div className="truncate text-sm text-muted-foreground">{nip05 ?? npubShort}</div>
+        </div>
+        <a
+          href={`https://njump.me/${npub}`}
+          target="_blank"
+          rel="noopener noreferrer"
+          className="shrink-0 text-muted-foreground hover:text-foreground"
+          title="Open profile in njump.me"
+        >
+          <ExternalLink className="h-4 w-4" />
+        </a>
+      </div>
 
       <LookmarkFeed pubkey={pubkey} />
     </div>
   );
 }
 
-function EventView({ eventId, nip19Id }: { eventId: string; nip19Id: string; kindHint: 'note' | 'nevent' }) {
-  const { data: event, isLoading, isError } = useEvent(eventId);
-
-  if (isLoading) {
-    return (
-      <Card className="border-border/50 bg-card/50">
-        <CardHeader className="pb-3">
-          <div className="flex items-center gap-3">
-            <Skeleton className="h-10 w-10 rounded-full" />
-            <div className="space-y-2 flex-1">
-              <Skeleton className="h-4 w-40" />
-              <Skeleton className="h-3 w-24" />
-            </div>
-          </div>
-        </CardHeader>
-        <CardContent className="pt-0">
-          <Skeleton className="h-4 w-full mb-2" />
-          <Skeleton className="h-4 w-5/6 mb-2" />
-          <Skeleton className="h-4 w-2/3" />
-        </CardContent>
-      </Card>
-    );
-  }
-
-  if (!event || isError) {
-    return (
-      <Card className="border-border/50 bg-card/50">
-        <CardHeader className="pb-3">
-          <div className="flex items-center gap-2 text-sm font-medium">
-            <Loader2 className="h-4 w-4" />
-            Event not found
-          </div>
-        </CardHeader>
-        <CardContent className="pt-0">
-          <a
-            className="inline-flex items-center gap-2 text-sm text-muted-foreground hover:text-foreground transition-colors"
-            href={`https://njump.to/${nip19Id}`}
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            <ExternalLink className="h-4 w-4" />
-            Open via njump.to
-          </a>
-        </CardContent>
-      </Card>
-    );
-  }
-
+function EventView({ pointer, nip19Id }: { pointer: { id: string }; nip19Id: string }) {
+  const event = use$(() => eventStore.event(pointer.id), [pointer.id]);
   return <EventCard event={event} nip19Id={nip19Id} />;
 }
 
-function AddressableEventView({
+function AddressableView({
   kind,
   pubkey,
   identifier,
@@ -296,95 +132,69 @@ function AddressableEventView({
   identifier: string;
   nip19Id: string;
 }) {
-  const { data: event, isLoading, isError } = useAddressableEvent(kind, pubkey, identifier);
-
-  if (isLoading) {
-    return (
-      <Card className="border-border/50 bg-card/50">
-        <CardHeader className="pb-3">
-          <div className="flex items-center gap-3">
-            <Skeleton className="h-10 w-10 rounded-full" />
-            <div className="space-y-2 flex-1">
-              <Skeleton className="h-4 w-40" />
-              <Skeleton className="h-3 w-24" />
-            </div>
-          </div>
-        </CardHeader>
-        <CardContent className="pt-0">
-          <Skeleton className="h-4 w-full mb-2" />
-          <Skeleton className="h-4 w-5/6 mb-2" />
-          <Skeleton className="h-4 w-2/3" />
-        </CardContent>
-      </Card>
-    );
-  }
-
-  if (!event || isError) {
-    return (
-      <Card className="border-border/50 bg-card/50">
-        <CardHeader className="pb-3">
-          <div className="text-sm font-medium">Addressable event not found</div>
-        </CardHeader>
-        <CardContent className="pt-0">
-          <a
-            className="inline-flex items-center gap-2 text-sm text-muted-foreground hover:text-foreground transition-colors"
-            href={`https://njump.to/${nip19Id}`}
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            <ExternalLink className="h-4 w-4" />
-            Open via njump.to
-          </a>
-        </CardContent>
-      </Card>
-    );
-  }
-
+  const event = use$(
+    () => eventStore.replaceable(kind, pubkey, identifier),
+    [kind, pubkey, identifier],
+  );
   return <EventCard event={event} nip19Id={nip19Id} />;
 }
 
-function EventCard({ event, nip19Id }: { event: NostrEvent; nip19Id: string }) {
-  const author = useAuthor(event.pubkey);
-  const displayName = author.data?.metadata?.name ?? genUserName(event.pubkey);
-  const avatar = author.data?.metadata?.picture;
+function EventCard({ event, nip19Id }: { event: NostrEvent | undefined; nip19Id: string }) {
+  const author = useProfile(event?.pubkey);
+
+  if (event === undefined) {
+    return (
+      <div className="rounded-xl border border-border bg-card p-4">
+        <div className="mb-3 flex items-center gap-3">
+          <Skeleton className="h-9 w-9 rounded-full" />
+          <div className="flex-1 space-y-2">
+            <Skeleton className="h-4 w-40" />
+            <Skeleton className="h-3 w-24" />
+          </div>
+        </div>
+        <div className="space-y-2">
+          <Skeleton className="h-4 w-full" />
+          <Skeleton className="h-4 w-5/6" />
+        </div>
+        <a
+          href={`https://njump.me/${nip19Id}`}
+          target="_blank"
+          rel="noopener noreferrer"
+          className="mt-4 inline-flex items-center gap-2 text-sm text-muted-foreground hover:text-foreground"
+        >
+          <ExternalLink className="h-4 w-4" />
+          Open via njump.me
+        </a>
+      </div>
+    );
+  }
 
   return (
-    <Card className="border-border/50 bg-card/50">
-      <CardHeader className="pb-3">
-        <div className="flex items-start justify-between gap-3">
-          <div className="flex items-center gap-3 min-w-0">
-            <Avatar className="h-10 w-10 shrink-0">
-              <AvatarImage src={avatar} alt={displayName} />
-              <AvatarFallback className="bg-gradient-to-br from-primary/20 to-primary/10 text-primary font-medium">
-                {displayName.slice(0, 2).toUpperCase()}
-              </AvatarFallback>
-            </Avatar>
-            <div className="min-w-0">
-              <div className="font-semibold text-foreground truncate">{displayName}</div>
-              <div className="text-xs text-muted-foreground">
-                {new Date(event.created_at * 1000).toLocaleString()}
-              </div>
-            </div>
+    <article className="rounded-xl border border-border bg-card p-4">
+      <div className="mb-3 flex items-center gap-3">
+        <Avatar className="h-9 w-9">
+          <AvatarImage src={author.picture} alt={author.displayName} />
+          <AvatarFallback>{author.displayName.slice(0, 2).toUpperCase()}</AvatarFallback>
+        </Avatar>
+        <div className="min-w-0 flex-1">
+          <div className="truncate font-medium text-foreground">{author.displayName}</div>
+          <div className="text-xs text-muted-foreground">
+            {new Date(event.created_at * 1000).toLocaleString()}
           </div>
-
-          <a
-            href={`https://njump.to/${nip19Id}`}
-            target="_blank"
-            rel="noopener noreferrer"
-            className="inline-flex items-center gap-2 text-xs text-muted-foreground hover:text-foreground transition-colors shrink-0"
-            title="Open in njump.to"
-          >
-            <ExternalLink className="h-4 w-4" />
-            njump.to
-          </a>
         </div>
-      </CardHeader>
-
-      <CardContent className="pt-0">
-        <div className="text-sm text-foreground/90">
-          <NoteContent event={event} className="whitespace-pre-wrap break-words" />
-        </div>
-      </CardContent>
-    </Card>
+        <a
+          href={`https://njump.me/${nip19Id}`}
+          target="_blank"
+          rel="noopener noreferrer"
+          className="shrink-0 text-muted-foreground hover:text-foreground"
+          title="Open in njump.me"
+        >
+          <ExternalLink className="h-4 w-4" />
+        </a>
+      </div>
+      <NoteBody event={event} className="text-sm text-foreground/90" />
+    </article>
   );
 }
+
+export default NIP19Page;
