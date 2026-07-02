@@ -116,10 +116,16 @@ function buildEmojiBars(
   if (!counts.has(selected.key)) counts.set(selected.key, { emoji: selected, count: 0 });
 
   const all = [...counts.values()].sort((a, b) => b.count - a.count);
-  const native = all.filter((c) => !c.emoji.url);
   const custom = all.filter((c) => c.emoji.url);
+
+  // Pin 👀 to the first slot so it never drops off when deselected.
+  const native = all.filter((c) => !c.emoji.url);
+  const eyes = native.filter((c) => c.emoji.key === DEFAULT_EMOJI.key);
+  const rest = native.filter((c) => c.emoji.key !== DEFAULT_EMOJI.key);
+  const nativeTop = [...eyes, ...rest].slice(0, MAX_EMOJIS);
+
   return {
-    native: ensureSelected(native.slice(0, MAX_EMOJIS), selected, native),
+    native: ensureSelected(nativeTop, selected, native),
     custom: ensureSelected(custom.slice(0, MAX_EMOJIS), selected, custom),
   };
 }
