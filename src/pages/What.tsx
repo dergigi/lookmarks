@@ -1,6 +1,6 @@
 import { useSeoMeta } from '@unhead/react';
 import { Link } from 'react-router-dom';
-import { ArrowLeft, Eye, Heart } from 'lucide-react';
+import { ArrowLeft, Eye, Heart, MessageSquare, Repeat } from 'lucide-react';
 
 export default function What() {
   useSeoMeta({
@@ -43,27 +43,65 @@ export default function What() {
 
         <hr className="my-10 border-border" />
 
-        <div className="space-y-4 text-muted-foreground">
-          <div className="flex items-center gap-3">
-            <span className="inline-flex items-center gap-1 rounded-full border border-border/50 bg-muted/40 px-2 py-1">
-              <Eye className="h-3 w-3 text-muted-foreground" />
-              <Heart className="h-3 w-3" />
-            </span>
-            <h3 className="font-medium text-foreground">Reactions</h3>
+        <p className="mb-6 text-muted-foreground">This app collects three kinds of lookmarks:</p>
+
+        <div className="space-y-8 text-muted-foreground">
+          <div className="space-y-3">
+            <div className="flex items-center gap-3">
+              <span className="inline-flex items-center gap-1 rounded-full border border-border/50 bg-muted/40 px-2 py-1">
+                <Eye className="h-3 w-3 text-muted-foreground" />
+                <Heart className="h-3 w-3" />
+              </span>
+              <h3 className="font-medium text-foreground">Reactions</h3>
+            </div>
+            <p className="leading-relaxed">
+              A{' '}
+              <a
+                href="https://github.com/nostr-protocol/nips/blob/master/25.md"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="text-foreground underline underline-offset-2 transition-colors hover:text-primary"
+              >
+                NIP-25
+              </a>{' '}
+              reaction (kind 7) with 👀 as the content. Cheap to publish and easy to pull from
+              relays, which makes them a reliable signal for “worth a look”.
+            </p>
           </div>
-          <p className="leading-relaxed">
-            Lookmarks are{' '}
-            <a
-              href="https://github.com/nostr-protocol/nips/blob/master/25.md"
-              target="_blank"
-              rel="noopener noreferrer"
-              className="text-foreground underline underline-offset-2 transition-colors hover:text-primary"
-            >
-              NIP-25
-            </a>{' '}
-            reactions (kind 7) with 👀 as the content. They're cheap to publish and easy to pull
-            from relays, which makes them a reliable signal for “worth a look”.
-          </p>
+
+          <div className="space-y-3">
+            <div className="flex items-center gap-3">
+              <span className="inline-flex items-center rounded-full border border-border/50 bg-muted/40 px-2 py-1">
+                <MessageSquare className="h-3 w-3" />
+              </span>
+              <h3 className="font-medium text-foreground">Replies</h3>
+            </div>
+            <p className="leading-relaxed">
+              A reply that contains 👀. Someone saw a post, pointed their eyes at it, and left a
+              little note in the process.
+            </p>
+          </div>
+
+          <div className="space-y-3">
+            <div className="flex items-center gap-3">
+              <span className="inline-flex items-center rounded-full border border-border/50 bg-muted/40 px-2 py-1">
+                <Repeat className="h-3 w-3" />
+              </span>
+              <h3 className="font-medium text-foreground">Quotes</h3>
+            </div>
+            <p className="leading-relaxed">
+              A quote (
+              <a
+                href="https://github.com/nostr-protocol/nips/blob/master/18.md"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="text-foreground underline underline-offset-2 transition-colors hover:text-primary"
+              >
+                NIP-18
+              </a>
+              ) with 👀, re-sharing a post with an eyes-on stamp.
+            </p>
+          </div>
         </div>
 
         <hr className="my-10 border-border" />

@@ -1,12 +1,12 @@
 import { nip19 } from 'nostr-tools';
 import { Link } from 'react-router-dom';
-import { ExternalLink } from 'lucide-react';
+import { ExternalLink, MessageSquare, Repeat } from 'lucide-react';
 
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { NoteBody } from '@/components/NoteBody';
 import { useProfile } from '@/hooks/useProfile';
 import { formatTimestamp } from '@/lib/formatTimestamp';
-import type { LookmarkedEvent } from '@/nostr/lookmarks';
+import { getLookmarkType, type LookmarkedEvent } from '@/nostr/lookmarks';
 
 export function LookmarkCard({ lookmarkedEvent }: { lookmarkedEvent: LookmarkedEvent }) {
   const { event, lookmarks, latestLookmarkAt } = lookmarkedEvent;
@@ -14,6 +14,14 @@ export function LookmarkCard({ lookmarkedEvent }: { lookmarkedEvent: LookmarkedE
 
   const npub = nip19.npubEncode(event.pubkey);
   const nevent = nip19.neventEncode({ id: event.id, author: event.pubkey });
+
+  const counts = lookmarks.reduce(
+    (acc, lm) => {
+      acc[getLookmarkType(lm)] += 1;
+      return acc;
+    },
+    { reaction: 0, reply: 0, quote: 0 },
+  );
 
   const latest = lookmarks.reduce((a, b) => (b.created_at > a.created_at ? b : a), lookmarks[0]);
   const latestAuthor = useProfile(latest?.pubkey);
@@ -50,10 +58,24 @@ export function LookmarkCard({ lookmarkedEvent }: { lookmarkedEvent: LookmarkedE
       <NoteBody event={event} className="text-sm text-foreground/90 line-clamp-[12]" />
 
       <div className="mt-4 flex flex-wrap items-center gap-x-3 gap-y-2 border-t border-border/60 pt-3 text-xs text-muted-foreground">
-        <span className="inline-flex items-center gap-1" title="👀 reactions">
-          <span aria-hidden>👀</span>
-          <span className="font-medium text-foreground">{lookmarks.length}</span>
-        </span>
+        {counts.reaction > 0 && (
+          <span className="inline-flex items-center gap-1" title="👀 reactions">
+            <span aria-hidden>👀</span>
+            <span className="font-medium text-foreground">{counts.reaction}</span>
+          </span>
+        )}
+        {counts.reply > 0 && (
+          <span className="inline-flex items-center gap-1" title="replies">
+            <MessageSquare className="h-3.5 w-3.5" />
+            <span className="font-medium text-foreground">{counts.reply}</span>
+          </span>
+        )}
+        {counts.quote > 0 && (
+          <span className="inline-flex items-center gap-1" title="quotes">
+            <Repeat className="h-3.5 w-3.5" />
+            <span className="font-medium text-foreground">{counts.quote}</span>
+          </span>
+        )}
 
         {latest && (
           <span className="truncate">

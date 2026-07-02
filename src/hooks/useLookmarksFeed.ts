@@ -4,8 +4,9 @@ import type { Filter, NostrEvent } from 'nostr-tools';
 import { filter as rxFilter, take, timeout, type Subscription } from 'rxjs';
 
 import { addressLoader, eventLoader, eventStore, pool, userOutboxes } from '@/nostr/core';
-import { DEFAULT_RELAYS, DISCOVERY_RELAYS } from '@/nostr/relays';
+import { DEFAULT_RELAYS, DISCOVERY_RELAYS, SEARCH_RELAYS } from '@/nostr/relays';
 import {
+  EYES_EMOJI,
   getTargetPointer,
   isLookmark,
   targetKey,
@@ -13,28 +14,32 @@ import {
   type TargetPointer,
 } from '@/nostr/lookmarks';
 
-const GLOBAL_LIMIT = 400;
-const PROFILE_LIMIT = 150;
+const FIREHOSE_LIMIT = 400;
+const SEARCH_LIMIT = 100;
+const OUTBOX_LIMIT = 150;
 const OUTBOX_WAIT_MS = 4000;
 
+/** One discovery stream: a set of relays plus a base filter (paginated by `until`). */
+interface FeedSource {
+  id: string;
+  relays: string[];
+  filter: Omit<Filter, 'until'>;
+}
+
 export interface LookmarksFeed {
-  /** Lookmarked events grouped by target, newest reaction first. */
+  /** Lookmarked events grouped by target, newest lookmark first. */
   lookmarks: LookmarkedEvent[];
-  /** First page is loading and nothing is shown yet. */
   loading: boolean;
-  /** An additional page is loading. */
   loadingMore: boolean;
-  /** Whether another page might be available. */
   hasMore: boolean;
-  /** The last load failed. */
   error: boolean;
-  /** Relays currently being read from (firehose, or the user's outbox). */
+  /** Relays currently being read from. */
   relays: string[];
   loadMore: () => void;
   refresh: () => void;
 }
 
-/** Groups reactions by the target they point at, resolving targets from the store. */
+/** Groups lookmarks by the target they point at, resolving targets from the store. */
 function buildGroups(lookmarkEvents: NostrEvent[]): LookmarkedEvent[] {
   const byTarget = new Map<string, { pointer: TargetPointer; lookmarks: NostrEvent[] }>();
 
@@ -62,16 +67,37 @@ function buildGroups(lookmarkEvents: NostrEvent[]): LookmarkedEvent[] {
   return results;
 }
 
+/** Builds the discovery sources for the global feed. */
+function globalSources(): FeedSource[] {
+  return [
+    { id: 'reactions', relays: DISCOVERY_RELAYS, filter: { kinds: [7], limit: FIREHOSE_LIMIT } },
+    {
+      id: 'referential',
+      relays: SEARCH_RELAYS,
+      filter: { kinds: [1], search: EYES_EMOJI, limit: SEARCH_LIMIT },
+    },
+  ];
+}
+
+/** Builds the discovery sources for a single user, read from their outbox relays. */
+function profileSources(pubkey: string, relays: string[]): FeedSource[] {
+  return [
+    { id: 'reactions', relays, filter: { kinds: [7], authors: [pubkey], limit: OUTBOX_LIMIT } },
+    { id: 'notes', relays, filter: { kinds: [1], authors: [pubkey], limit: OUTBOX_LIMIT } },
+  ];
+}
+
 /**
- * Discovers 👀 reactions (kind 7) and resolves the events they point at.
+ * Discovers lookmarks and resolves the events they point at.
  *
- * - Global feed: a firehose of recent reactions from {@link DISCOVERY_RELAYS},
- *   filtered to 👀 client-side (no NIP-50 search needed).
- * - Profile feed (`pubkey`): the user's reactions read from their NIP-65 outbox
- *   relays, falling back to general relays if no relay list is published.
+ * - Global feed: 👀 reactions from a firehose plus kind 1 reply/quote lookmarks
+ *   found via NIP-50 search, merged and grouped by target.
+ * - Profile feed (`pubkey`): the user's reactions and notes read from their
+ *   NIP-65 outbox relays (falling back to general relays), filtered to 👀
+ *   reactions and referential 👀 notes.
  *
- * Targets are resolved via loaders using relay hints, general relays, and the
- * target author's outbox relays, so notes are found wherever they live.
+ * Targets resolve via relay hints, general relays, and the target author's
+ * outbox relays, so notes are found wherever they live.
  */
 export function useLookmarksFeed(pubkey?: string): LookmarksFeed {
   const [epoch, setEpoch] = useState(0);
@@ -80,15 +106,18 @@ export function useLookmarksFeed(pubkey?: string): LookmarksFeed {
   const [loadingMore, setLoadingMore] = useState(false);
   const [hasMore, setHasMore] = useState(true);
   const [error, setError] = useState(false);
-  const [relays, setRelays] = useState<string[]>(pubkey ? [] : DISCOVERY_RELAYS);
+  const [relays, setRelays] = useState<string[]>(() =>
+    pubkey ? [] : [...new Set([...DISCOVERY_RELAYS, ...SEARCH_RELAYS])],
+  );
 
   const seenLookmarks = useRef<Set<string>>(new Set());
   const requestedTargets = useRef<Set<string>>(new Set());
   const requestedOutbox = useRef<Set<string>>(new Set());
   const activeSubs = useRef<Subscription[]>([]);
   const runningRef = useRef(false);
-  const oldestRef = useRef<number | undefined>(undefined);
-  const relaysRef = useRef<string[]>(pubkey ? [] : DISCOVERY_RELAYS);
+  const sourcesRef = useRef<FeedSource[]>([]);
+  const oldestRef = useRef<Record<string, number>>({});
+  const exhaustedRef = useRef<Set<string>>(new Set());
 
   // Re-render as the store changes so newly resolved targets appear in the feed.
   const lastInsert = use$(() => eventStore.insert$, []);
@@ -105,8 +134,8 @@ export function useLookmarksFeed(pubkey?: string): LookmarksFeed {
   }, []);
 
   const resolveTarget = useCallback(
-    (reaction: NostrEvent) => {
-      const pointer = getTargetPointer(reaction);
+    (lookmark: NostrEvent) => {
+      const pointer = getTargetPointer(lookmark);
       if (!pointer) return;
 
       const key = targetKey(pointer);
@@ -142,60 +171,65 @@ export function useLookmarksFeed(pubkey?: string): LookmarksFeed {
     [routeOutbox],
   );
 
-  const runLoad = useCallback(
-    (until?: number) => {
-      if (runningRef.current || relaysRef.current.length === 0) return;
-      runningRef.current = true;
+  const runLoad = useCallback(() => {
+    const sources = sourcesRef.current.filter((s) => !exhaustedRef.current.has(s.id));
+    if (runningRef.current || sources.length === 0) return;
+    runningRef.current = true;
 
-      setError(false);
-      setLoadingMore(seenLookmarks.current.size > 0);
+    setError(false);
+    setLoadingMore(seenLookmarks.current.size > 0);
 
-      const filters: Filter = {
-        kinds: [7],
-        limit: pubkey ? PROFILE_LIMIT : GLOBAL_LIMIT,
-      };
-      if (pubkey) filters.authors = [pubkey];
-      if (until !== undefined) filters.until = until;
+    let pending = sources.length;
+    let errored = 0;
+    const finish = () => {
+      pending -= 1;
+      if (pending > 0) return;
+      runningRef.current = false;
+      setLoading(false);
+      setLoadingMore(false);
+      setHasMore(exhaustedRef.current.size < sourcesRef.current.length);
+      if (errored === sources.length && seenLookmarks.current.size === 0) setError(true);
+    };
+
+    for (const source of sources) {
+      const until = oldestRef.current[source.id];
+      const filters: Filter = { ...source.filter };
+      if (until !== undefined) filters.until = until - 1;
 
       let raw = 0;
-      const finish = () => {
-        runningRef.current = false;
-        setLoading(false);
-        setLoadingMore(false);
-      };
-
-      const sub = pool.request(relaysRef.current, filters, { eventStore }).subscribe({
+      const sub = pool.request(source.relays, filters, { eventStore }).subscribe({
         next: (event) => {
           raw += 1;
-          if (oldestRef.current === undefined || event.created_at < oldestRef.current) {
-            oldestRef.current = event.created_at;
+          const prev = oldestRef.current[source.id];
+          if (prev === undefined || event.created_at < prev) {
+            oldestRef.current[source.id] = event.created_at;
           }
           if (!isLookmark(event, pubkey)) return;
           if (seenLookmarks.current.has(event.id)) return;
           seenLookmarks.current.add(event.id);
-          setLookmarkEvents((prev) => [...prev, event]);
+          setLookmarkEvents((prevEvents) => [...prevEvents, event]);
           resolveTarget(event);
         },
         complete: () => {
+          if (raw === 0) exhaustedRef.current.add(source.id);
           finish();
-          if (raw === 0) setHasMore(false);
         },
         error: () => {
+          errored += 1;
           finish();
-          setError(true);
         },
       });
       activeSubs.current.push(sub);
-    },
-    [pubkey, resolveTarget],
-  );
+    }
+  }, [pubkey, resolveTarget]);
 
   // Reset state and load the first page when the target user changes or on refresh.
   useEffect(() => {
     seenLookmarks.current = new Set();
     requestedTargets.current = new Set();
     requestedOutbox.current = new Set();
-    oldestRef.current = undefined;
+    oldestRef.current = {};
+    exhaustedRef.current = new Set();
     runningRef.current = false;
     setLookmarkEvents([]);
     setLoading(true);
@@ -206,18 +240,18 @@ export function useLookmarksFeed(pubkey?: string): LookmarksFeed {
     let fallbackTimer: ReturnType<typeof setTimeout> | undefined;
 
     if (!pubkey) {
-      relaysRef.current = DISCOVERY_RELAYS;
-      setRelays(DISCOVERY_RELAYS);
+      sourcesRef.current = globalSources();
+      setRelays([...new Set([...DISCOVERY_RELAYS, ...SEARCH_RELAYS])]);
       runLoad();
     } else {
-      relaysRef.current = [];
+      sourcesRef.current = [];
       setRelays([]);
       let settled = false;
       const start = (r: string[]) => {
         if (settled) return;
         settled = true;
         if (fallbackTimer) clearTimeout(fallbackTimer);
-        relaysRef.current = r;
+        sourcesRef.current = profileSources(pubkey, r);
         setRelays(r);
         runLoad();
       };
@@ -246,8 +280,7 @@ export function useLookmarksFeed(pubkey?: string): LookmarksFeed {
 
   const loadMore = useCallback(() => {
     if (!hasMore || runningRef.current) return;
-    const until = oldestRef.current !== undefined ? oldestRef.current - 1 : undefined;
-    runLoad(until);
+    runLoad();
   }, [hasMore, runLoad]);
 
   const refresh = useCallback(() => setEpoch((e) => e + 1), []);

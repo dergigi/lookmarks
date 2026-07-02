@@ -12,6 +12,17 @@ export const DISCOVERY_RELAYS = [
   'wss://relay.ditto.pub',
 ];
 
+/**
+ * NIP-50 capable relays used to find kind 1 reply/quote lookmarks by searching
+ * for 👀. A kind 1 firehose is impractical to filter client-side, so these are
+ * only used for the global feed's replies and quotes.
+ */
+export const SEARCH_RELAYS = [
+  'wss://relay.nostr.band',
+  'wss://search.nos.today',
+  'wss://relay.noswhere.com',
+];
+
 /** General relays used to resolve target events and as an outbox fallback. */
 export const DEFAULT_RELAYS = [
   'wss://relay.damus.io',

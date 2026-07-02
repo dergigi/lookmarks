@@ -79,8 +79,8 @@ export function LookmarkFeed({ pubkey }: { pubkey?: string }) {
             relays={relays}
             description={
               pubkey
-                ? "Reading this user's reactions from their outbox relays."
-                : 'Reading recent reactions from these relays.'
+                ? "Reading this user's reactions and notes from their outbox relays."
+                : 'Reading reactions from a firehose and searching for replies & quotes across these relays.'
             }
           />
         </span>
