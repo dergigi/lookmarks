@@ -74,7 +74,7 @@ export function LookmarkFeed({ pubkey }: { pubkey?: string }) {
     <div className="space-y-4">
       <div className="flex items-center justify-between text-sm text-muted-foreground">
         <span>
-          {lookmarks.length} lookmarked across{' '}
+          {lookmarks.length} {lookmarks.length === 1 ? 'lookmark' : 'lookmarks'} across{' '}
           <ConnectedRelaysPill
             relays={relays}
             description={
