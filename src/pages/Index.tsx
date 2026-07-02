@@ -74,14 +74,49 @@ const Index = () => {
   return (
     <div className="flex flex-1 flex-col bg-background">
       <header className="sticky top-0 z-40 border-b border-border/60 bg-background/80 backdrop-blur">
-        <div className="mx-auto flex w-full max-w-2xl items-center justify-between px-4 py-3">
-          <div className="flex items-center gap-2">
+        <div className="mx-auto flex w-full max-w-2xl items-center gap-2 px-4 py-3">
+          <div className="flex shrink-0 items-center gap-2">
             <span role="img" aria-label="Lookmarks" className="text-xl leading-none">
               👀
             </span>
-            <span className="text-base font-semibold tracking-tight">Lookmarks</span>
+            <span className="hidden text-base font-semibold tracking-tight sm:inline">
+              Lookmarks
+            </span>
           </div>
-          <Button asChild variant="ghost" size="icon" aria-label="What are Lookmarks?">
+
+          <div className="relative ml-auto w-44 sm:w-60">
+            {searching ? (
+              <Loader2 className="pointer-events-none absolute left-2.5 top-1/2 h-3.5 w-3.5 -translate-y-1/2 animate-spin text-muted-foreground" />
+            ) : (
+              <Search className="pointer-events-none absolute left-2.5 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-muted-foreground" />
+            )}
+            <Input
+              type="text"
+              placeholder="npub, NIP-05, pubkey…"
+              value={searchInput}
+              onChange={(e) => {
+                setSearchInput(e.target.value);
+                setSearchError(null);
+              }}
+              onKeyDown={(e) => e.key === 'Enter' && handleSearch()}
+              disabled={searching}
+              aria-label="View a profile’s lookmarks"
+              className="h-8 border-transparent bg-muted/50 pl-8 text-sm focus-visible:bg-background"
+            />
+            {searchError && (
+              <p className="absolute right-0 top-9 whitespace-nowrap text-xs text-destructive">
+                {searchError}
+              </p>
+            )}
+          </div>
+
+          <Button
+            asChild
+            variant="ghost"
+            size="icon"
+            className="shrink-0"
+            aria-label="What are Lookmarks?"
+          >
             <Link to="/what">
               <Info className="h-4 w-4" />
             </Link>
@@ -102,37 +137,6 @@ const Index = () => {
             Learn more.
           </Link>
         </p>
-
-        <div className="mt-6 flex gap-2">
-          <div className="relative flex-1">
-            <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
-            <Input
-              type="text"
-              placeholder="View a profile’s lookmarks (npub, NIP-05, or pubkey)"
-              value={searchInput}
-              onChange={(e) => {
-                setSearchInput(e.target.value);
-                setSearchError(null);
-              }}
-              onKeyDown={(e) => e.key === 'Enter' && handleSearch()}
-              disabled={searching}
-              className="h-11 pl-10"
-            />
-          </div>
-          <Button
-            onClick={handleSearch}
-            disabled={searching}
-            className="h-11"
-            aria-label="Search"
-          >
-            {searching ? (
-              <Loader2 className="h-4 w-4 animate-spin" />
-            ) : (
-              <Search className="h-4 w-4" />
-            )}
-          </Button>
-        </div>
-        {searchError && <p className="mt-2 text-sm text-destructive">{searchError}</p>}
       </section>
 
       <main className="mx-auto w-full max-w-2xl flex-1 px-4 py-8">
