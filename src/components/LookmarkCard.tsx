@@ -37,7 +37,7 @@ export function LookmarkCard({ lookmarkedEvent }: { lookmarkedEvent: LookmarkedE
           </div>
         </Link>
         <a
-          href={`https://njump.me/${nevent}`}
+          href={`https://njump.to/${nevent}`}
           target="_blank"
           rel="noopener noreferrer"
           className="ml-auto shrink-0 text-xs text-muted-foreground hover:text-foreground"
@@ -70,11 +70,11 @@ export function LookmarkCard({ lookmarkedEvent }: { lookmarkedEvent: LookmarkedE
         )}
 
         <a
-          href={`https://njump.me/${nevent}`}
+          href={`https://njump.to/${nevent}`}
           target="_blank"
           rel="noopener noreferrer"
           className="ml-auto inline-flex items-center gap-1 hover:text-foreground"
-          title="Open in njump.me"
+          title="Open in njump.to"
         >
           <ExternalLink className="h-3.5 w-3.5" />
         </a>

@@ -101,11 +101,11 @@ function ProfileView({ pubkey }: { pubkey: string }) {
           <div className="truncate text-sm text-muted-foreground">{nip05 ?? npubShort}</div>
         </div>
         <a
-          href={`https://njump.me/${npub}`}
+          href={`https://njump.to/${npub}`}
           target="_blank"
           rel="noopener noreferrer"
           className="shrink-0 text-muted-foreground hover:text-foreground"
-          title="Open profile in njump.me"
+          title="Open profile in njump.to"
         >
           <ExternalLink className="h-4 w-4" />
         </a>
@@ -157,13 +157,13 @@ function EventCard({ event, nip19Id }: { event: NostrEvent | undefined; nip19Id:
           <Skeleton className="h-4 w-5/6" />
         </div>
         <a
-          href={`https://njump.me/${nip19Id}`}
+          href={`https://njump.to/${nip19Id}`}
           target="_blank"
           rel="noopener noreferrer"
           className="mt-4 inline-flex items-center gap-2 text-sm text-muted-foreground hover:text-foreground"
         >
           <ExternalLink className="h-4 w-4" />
-          Open via njump.me
+          Open via njump.to
         </a>
       </div>
     );
@@ -183,11 +183,11 @@ function EventCard({ event, nip19Id }: { event: NostrEvent | undefined; nip19Id:
           </div>
         </div>
         <a
-          href={`https://njump.me/${nip19Id}`}
+          href={`https://njump.to/${nip19Id}`}
           target="_blank"
           rel="noopener noreferrer"
           className="shrink-0 text-muted-foreground hover:text-foreground"
-          title="Open in njump.me"
+          title="Open in njump.to"
         >
           <ExternalLink className="h-4 w-4" />
         </a>

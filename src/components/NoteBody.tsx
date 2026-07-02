@@ -107,7 +107,7 @@ const components: ComponentMap = {
       default:
         return (
           <a
-            href={`https://njump.me/${encoded}`}
+            href={`https://njump.to/${encoded}`}
             target="_blank"
             rel="noopener noreferrer"
             className="text-primary hover:underline"
