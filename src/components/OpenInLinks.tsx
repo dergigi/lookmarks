@@ -1,5 +1,9 @@
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import { faBugs, faGlobe, faUpRightFromSquare } from '@fortawesome/free-solid-svg-icons';
+import {
+  faArrowUpRightFromSquare,
+  faMagnifyingGlass,
+  faMobileScreenButton,
+} from '@fortawesome/free-solid-svg-icons';
 
 import { antsUrl, njumpUrl, nostrUri, type NostrLinkType } from '@/lib/nostrLinks';
 import { cn } from '@/lib/utils';
@@ -25,7 +29,7 @@ export function OpenInLinks({ id, type, className }: OpenInLinksProps) {
         title="Open in njump.to"
         className={linkClass}
       >
-        <FontAwesomeIcon icon={faGlobe} className={iconClass} />
+        <FontAwesomeIcon icon={faArrowUpRightFromSquare} className={iconClass} />
       </a>
       <a
         href={antsUrl(id, type)}
@@ -34,10 +38,10 @@ export function OpenInLinks({ id, type, className }: OpenInLinksProps) {
         title="Open in ants.sh"
         className={linkClass}
       >
-        <FontAwesomeIcon icon={faBugs} className={iconClass} />
+        <FontAwesomeIcon icon={faMagnifyingGlass} className={iconClass} />
       </a>
       <a href={nostrUri(id)} title="Open in native app" className={linkClass}>
-        <FontAwesomeIcon icon={faUpRightFromSquare} className={iconClass} />
+        <FontAwesomeIcon icon={faMobileScreenButton} className={iconClass} />
       </a>
     </div>
   );
