@@ -1,4 +1,4 @@
-import { ChevronDown, Eye, Loader2, RefreshCw } from 'lucide-react';
+import { ChevronDown, Eye, HelpCircle, Loader2, RefreshCw } from 'lucide-react';
 
 import { Button } from '@/components/ui/button';
 import { LookmarkCard } from '@/components/LookmarkCard';
@@ -128,8 +128,17 @@ export function LookmarkFeed({ pubkey }: { pubkey?: string }) {
       <div className="space-y-2">
         <EmojiBar emojis={emojiBar} selected={selectedEmoji} onSelect={selectEmoji} />
         {customEmojiBar.length > 0 && (
-          <div className="border-t border-border/40 pt-2">
+          <div className="flex items-center gap-1.5 border-t border-border/40 pt-2">
             <EmojiBar emojis={customEmojiBar} selected={selectedEmoji} onSelect={selectEmoji} />
+            <a
+              href="https://koteitan.github.io/emoemo/#/"
+              target="_blank"
+              rel="noopener noreferrer"
+              title="About custom emoji"
+              className="text-muted-foreground/60 transition-colors hover:text-foreground"
+            >
+              <HelpCircle className="h-4 w-4" />
+            </a>
           </div>
         )}
       </div>
