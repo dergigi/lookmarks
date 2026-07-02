@@ -50,20 +50,6 @@ export function AppFooter() {
               <span>GitHub</span>
             </a>
 
-            <span className="text-sm text-muted-foreground">
-              Prototyped with{' '}
-              <a
-                href="https://shakespeare.diy/"
-                target="_blank"
-                rel="noopener noreferrer"
-                className="underline hover:text-foreground transition-colors"
-                aria-label="Shakespeare (prototype tool)"
-                title="Shakespeare"
-              >
-                Shakespeare
-              </a>
-            </span>
-
             <p className="text-sm text-muted-foreground">
               Created by{' '}
               <a
