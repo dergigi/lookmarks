@@ -7,7 +7,7 @@ import { NjumpLink } from '@/components/NjumpLink';
 import { NoteBody } from '@/components/NoteBody';
 import { useProfile } from '@/hooks/useProfile';
 import { formatTimestamp } from '@/lib/formatTimestamp';
-import { getLookmarkType, type LookmarkedEvent } from '@/nostr/lookmarks';
+import { getLookmarkType, getReactionEmoji, type LookmarkedEvent } from '@/nostr/lookmarks';
 
 export function LookmarkCard({ lookmarkedEvent }: { lookmarkedEvent: LookmarkedEvent }) {
   const { event, lookmarks, latestLookmarkAt } = lookmarkedEvent;
@@ -23,6 +23,8 @@ export function LookmarkCard({ lookmarkedEvent }: { lookmarkedEvent: LookmarkedE
     },
     { reaction: 0, reply: 0, quote: 0 },
   );
+
+  const reactionEmoji = getReactionEmoji(lookmarks.find((lm) => lm.kind === 7) ?? event);
 
   const latest = lookmarks.reduce((a, b) => (b.created_at > a.created_at ? b : a), lookmarks[0]);
   const latestAuthor = useProfile(latest?.pubkey);
@@ -55,8 +57,12 @@ export function LookmarkCard({ lookmarkedEvent }: { lookmarkedEvent: LookmarkedE
 
       <div className="mt-4 flex flex-wrap items-center gap-x-3 gap-y-2 border-t border-border/60 pt-3 text-xs text-muted-foreground">
         {counts.reaction > 0 && (
-          <span className="inline-flex items-center gap-1" title="👀 reactions">
-            <span aria-hidden>👀</span>
+          <span className="inline-flex items-center gap-1" title="reactions">
+            {reactionEmoji?.url ? (
+              <img src={reactionEmoji.url} alt={reactionEmoji.shortcode ?? ''} className="h-3.5 w-3.5 object-contain" />
+            ) : (
+              <span aria-hidden>{reactionEmoji?.native ?? '👀'}</span>
+            )}
             <span className="font-medium text-foreground">{counts.reaction}</span>
           </span>
         )}

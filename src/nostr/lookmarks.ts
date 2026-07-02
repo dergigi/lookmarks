@@ -1,7 +1,22 @@
 import type { NostrEvent } from 'nostr-tools';
 
-/** The emoji that marks something as worth a look. */
+/** The default emoji: 👀, "worth a look". */
 export const EYES_EMOJI = '👀';
+
+/** A reaction emoji, either a native unicode emoji or a NIP-30 custom emoji. */
+export interface ReactionEmoji {
+  /** Match/count key: the native emoji, or ":shortcode:" for custom emoji. */
+  key: string;
+  /** Native unicode emoji, when not a custom emoji. */
+  native?: string;
+  /** Custom emoji shortcode (without colons). */
+  shortcode?: string;
+  /** Custom emoji image URL. */
+  url?: string;
+}
+
+/** The emoji selected by default. */
+export const DEFAULT_EMOJI: ReactionEmoji = { key: EYES_EMOJI, native: EYES_EMOJI };
 
 /** The kind of signal a lookmark carries. */
 export type LookmarkType = 'reaction' | 'reply' | 'quote';
@@ -15,27 +30,50 @@ export type TargetPointer =
 export interface LookmarkedEvent {
   /** The original event that was lookmarked. */
   event: NostrEvent;
-  /** The lookmark events (👀 reactions, replies, and quotes). */
+  /** The lookmark events (reactions, replies, and quotes). */
   lookmarks: NostrEvent[];
   /** Most recent lookmark timestamp. */
   latestLookmarkAt: number;
 }
+
+const EMOJI_RE = /\p{Extended_Pictographic}/u;
+const CUSTOM_EMOJI_RE = /^:([a-zA-Z0-9_]+):$/;
 
 /** Whether a kind 1 note points at another event (reply or quote). */
 export function isReferentialEvent(event: NostrEvent): boolean {
   return event.tags.some(([name]) => name === 'q' || name === 'e' || name === 'a');
 }
 
-/**
- * A lookmark is a 👀 reaction (kind 7), or a kind 1 note containing 👀 that
- * replies to or quotes another event.
- */
-export function isLookmark(event: NostrEvent, pubkey?: string): boolean {
-  if (pubkey && event.pubkey !== pubkey) return false;
-  if (!event.content.includes(EYES_EMOJI)) return false;
-  if (event.kind === 7) return true;
-  if (event.kind === 1) return isReferentialEvent(event);
+/** Extracts the emoji a kind 7 reaction represents, or null for +/-/non-emoji. */
+export function getReactionEmoji(event: NostrEvent): ReactionEmoji | null {
+  if (event.kind !== 7) return null;
+  const content = event.content.trim();
+  if (!content || content === '+' || content === '-') return null;
+
+  const custom = content.match(CUSTOM_EMOJI_RE);
+  if (custom) {
+    const shortcode = custom[1];
+    const url = event.tags.find(([n, code]) => n === 'emoji' && code === shortcode)?.[2];
+    return url ? { key: content, shortcode, url } : null;
+  }
+
+  if (EMOJI_RE.test(content) && content.length <= 16) return { key: content, native: content };
+  return null;
+}
+
+/** Whether an event is a lookmark for the given emoji (reaction, or referential note). */
+export function matchesEmoji(event: NostrEvent, emoji: ReactionEmoji): boolean {
+  if (event.kind === 7) return event.content.trim() === emoji.key;
+  if (event.kind === 1) {
+    return isReferentialEvent(event) && event.content.includes(emoji.native ?? emoji.key);
+  }
   return false;
+}
+
+/** Whether an event is a lookmark for the emoji, optionally scoped to a pubkey. */
+export function isLookmark(event: NostrEvent, emoji: ReactionEmoji, pubkey?: string): boolean {
+  if (pubkey && event.pubkey !== pubkey) return false;
+  return matchesEmoji(event, emoji);
 }
 
 /** Classifies a lookmark as a reaction, quote, or reply. */
