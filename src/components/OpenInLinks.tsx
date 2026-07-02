@@ -22,14 +22,8 @@ const iconClass = 'h-3.5 w-3.5';
 export function OpenInLinks({ id, type, className }: OpenInLinksProps) {
   return (
     <div className={cn('inline-flex items-center gap-3', className)}>
-      <a
-        href={njumpUrl(id)}
-        target="_blank"
-        rel="noopener noreferrer"
-        title="Open in njump.to"
-        className={linkClass}
-      >
-        <FontAwesomeIcon icon={faArrowUpRightFromSquare} className={iconClass} />
+      <a href={nostrUri(id)} title="Open in native app" className={linkClass}>
+        <FontAwesomeIcon icon={faMobileScreenButton} className={iconClass} />
       </a>
       <a
         href={antsUrl(id, type)}
@@ -40,8 +34,14 @@ export function OpenInLinks({ id, type, className }: OpenInLinksProps) {
       >
         <FontAwesomeIcon icon={faMagnifyingGlass} className={iconClass} />
       </a>
-      <a href={nostrUri(id)} title="Open in native app" className={linkClass}>
-        <FontAwesomeIcon icon={faMobileScreenButton} className={iconClass} />
+      <a
+        href={njumpUrl(id)}
+        target="_blank"
+        rel="noopener noreferrer"
+        title="Open in njump.to"
+        className={linkClass}
+      >
+        <FontAwesomeIcon icon={faArrowUpRightFromSquare} className={iconClass} />
       </a>
     </div>
   );
