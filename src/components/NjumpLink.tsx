@@ -1,7 +1,7 @@
 import type { ReactNode } from 'react';
 import { ExternalLink } from 'lucide-react';
 
-import { njumpUrl } from '@/lib/njump';
+import { njumpUrl } from '@/lib/nostrLinks';
 
 interface NjumpLinkProps {
   /** A NIP-19 identifier (npub, nevent, note, naddr…). */

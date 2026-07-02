@@ -1,9 +1,10 @@
 import { nip19 } from 'nostr-tools';
 import { Link } from 'react-router-dom';
-import { ExternalLink, MessageSquare, Repeat } from 'lucide-react';
+import { MessageSquare, Repeat } from 'lucide-react';
 
 import { AuthorAvatar } from '@/components/AuthorAvatar';
 import { NjumpLink } from '@/components/NjumpLink';
+import { OpenInLinks } from '@/components/OpenInLinks';
 import { NoteBody } from '@/components/NoteBody';
 import { useProfile } from '@/hooks/useProfile';
 import { formatTimestamp } from '@/lib/formatTimestamp';
@@ -93,9 +94,7 @@ export function LookmarkCard({ lookmarkedEvent }: { lookmarkedEvent: LookmarkedE
           </span>
         )}
 
-        <NjumpLink id={nevent} className="ml-auto inline-flex items-center gap-1 hover:text-foreground">
-          <ExternalLink className="h-3.5 w-3.5" />
-        </NjumpLink>
+        <OpenInLinks id={nevent} type="event" className="ml-auto" />
       </div>
     </article>
   );

@@ -1,14 +1,14 @@
 import { nip19 } from 'nostr-tools';
 import { Link, useParams } from 'react-router-dom';
 import { use$ } from 'applesauce-react/hooks';
-import { ArrowLeft, ExternalLink } from 'lucide-react';
+import { ArrowLeft } from 'lucide-react';
 import type { NostrEvent } from 'nostr-tools';
 
 import NotFound from './NotFound';
 import { LookmarkFeed } from '@/components/LookmarkFeed';
 import { NoteBody } from '@/components/NoteBody';
 import { AuthorAvatar } from '@/components/AuthorAvatar';
-import { NjumpLink } from '@/components/NjumpLink';
+import { OpenInLinks } from '@/components/OpenInLinks';
 import { NoteCardSkeleton } from '@/components/NoteCardSkeleton';
 import { useProfile } from '@/hooks/useProfile';
 import { formatTimestamp } from '@/lib/formatTimestamp';
@@ -99,11 +99,7 @@ function ProfileView({ pubkey }: { pubkey: string }) {
           <div className="truncate text-lg font-semibold text-foreground">{displayName}</div>
           <div className="truncate text-sm text-muted-foreground">{nip05 ?? npubShort}</div>
         </div>
-        <NjumpLink
-          id={npub}
-          title="Open profile in njump.to"
-          className="shrink-0 text-muted-foreground hover:text-foreground"
-        />
+        <OpenInLinks id={npub} type="profile" className="shrink-0" />
       </div>
 
       <LookmarkFeed pubkey={pubkey} />
@@ -141,13 +137,7 @@ function EventCard({ event, nip19Id }: { event: NostrEvent | undefined; nip19Id:
     return (
       <div className="space-y-4">
         <NoteCardSkeleton />
-        <NjumpLink
-          id={nip19Id}
-          className="inline-flex items-center gap-2 text-sm text-muted-foreground hover:text-foreground"
-        >
-          <ExternalLink className="h-4 w-4" />
-          Open via njump.to
-        </NjumpLink>
+        <OpenInLinks id={nip19Id} type="event" />
       </div>
     );
   }
@@ -160,7 +150,7 @@ function EventCard({ event, nip19Id }: { event: NostrEvent | undefined; nip19Id:
           <div className="truncate font-medium text-foreground">{author.displayName}</div>
           <div className="text-xs text-muted-foreground">{formatTimestamp(event.created_at)}</div>
         </div>
-        <NjumpLink id={nip19Id} className="shrink-0 text-muted-foreground hover:text-foreground" />
+        <OpenInLinks id={nip19Id} type="event" className="shrink-0" />
       </div>
       <NoteBody event={event} className="text-sm text-foreground/90" />
     </article>
