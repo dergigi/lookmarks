@@ -197,7 +197,10 @@ export function useLookmarksFeed(pubkey?: string): LookmarksFeed {
       if (until !== undefined) filters.until = until - 1;
 
       let raw = 0;
-      const sub = pool.request(source.relays, filters, { eventStore }).subscribe({
+      // Disable auto-insert: the firehose returns mostly non-👀 events we don't
+      // need. We add only matched lookmarks to the store to keep it lean and
+      // avoid re-render churn from insert$ firing on every discovered event.
+      const sub = pool.request(source.relays, filters, { eventStore: null }).subscribe({
         next: (event) => {
           raw += 1;
           const prev = oldestRef.current[source.id];
@@ -207,6 +210,7 @@ export function useLookmarksFeed(pubkey?: string): LookmarksFeed {
           if (!isLookmark(event, pubkey)) return;
           if (seenLookmarks.current.has(event.id)) return;
           seenLookmarks.current.add(event.id);
+          eventStore.add(event);
           setLookmarkEvents((prevEvents) => [...prevEvents, event]);
           resolveTarget(event);
         },
