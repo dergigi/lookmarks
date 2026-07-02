@@ -1,13 +1,14 @@
 import { useState } from 'react';
 import { useSeoMeta } from '@unhead/react';
-import { Info, Search } from 'lucide-react';
-import { nip19 } from 'nostr-tools';
+import { Info, Loader2, Search } from 'lucide-react';
+import { nip05, nip19 } from 'nostr-tools';
 import { Link, useNavigate } from 'react-router-dom';
 
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { LookmarkFeed } from '@/components/LookmarkFeed';
 
+/** Resolves an npub, nprofile, or hex pubkey without any network request. */
 function resolvePubkey(input: string): string | null {
   const value = input.trim();
   if (/^[0-9a-f]{64}$/i.test(value)) return value.toLowerCase();
@@ -21,9 +22,15 @@ function resolvePubkey(input: string): string | null {
   return null;
 }
 
+/** A bare domain (dergigi.com) or a name@domain NIP-05 address. */
+function looksLikeNip05(value: string): boolean {
+  return /^(?:[\w.+-]+@)?[\w-]+(?:\.[\w-]+)+$/.test(value);
+}
+
 const Index = () => {
   const [searchInput, setSearchInput] = useState('');
   const [searchError, setSearchError] = useState<string | null>(null);
+  const [searching, setSearching] = useState(false);
   const navigate = useNavigate();
 
   useSeoMeta({
@@ -31,14 +38,36 @@ const Index = () => {
     description: 'A read-only explorer for Nostr posts marked with 👀 reactions.',
   });
 
-  const handleSearch = () => {
-    const pubkey = resolvePubkey(searchInput);
-    if (!pubkey) {
-      setSearchError('Enter a valid npub or pubkey');
+  const handleSearch = async () => {
+    const value = searchInput.trim();
+    if (!value) return;
+
+    const direct = resolvePubkey(value);
+    if (direct) {
+      setSearchError(null);
+      navigate(`/p/${nip19.npubEncode(direct)}`);
       return;
     }
-    setSearchError(null);
-    navigate(`/p/${nip19.npubEncode(pubkey)}`);
+
+    if (looksLikeNip05(value)) {
+      setSearchError(null);
+      setSearching(true);
+      try {
+        const pointer = await nip05.queryProfile(value);
+        if (pointer?.pubkey) {
+          navigate(`/p/${nip19.npubEncode(pointer.pubkey)}`);
+          return;
+        }
+        setSearchError(`No Nostr address found for ${value}`);
+      } catch {
+        setSearchError(`Couldn’t resolve ${value}`);
+      } finally {
+        setSearching(false);
+      }
+      return;
+    }
+
+    setSearchError('Enter an npub, pubkey, or NIP-05 address (e.g. dergigi.com)');
   };
 
   return (
@@ -78,18 +107,28 @@ const Index = () => {
             <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
             <Input
               type="text"
-              placeholder="View a profile’s lookmarks (npub or pubkey)"
+              placeholder="View a profile’s lookmarks (npub, NIP-05, or pubkey)"
               value={searchInput}
               onChange={(e) => {
                 setSearchInput(e.target.value);
                 setSearchError(null);
               }}
               onKeyDown={(e) => e.key === 'Enter' && handleSearch()}
+              disabled={searching}
               className="h-11 pl-10"
             />
           </div>
-          <Button onClick={handleSearch} className="h-11" aria-label="Search">
-            <Search className="h-4 w-4" />
+          <Button
+            onClick={handleSearch}
+            disabled={searching}
+            className="h-11"
+            aria-label="Search"
+          >
+            {searching ? (
+              <Loader2 className="h-4 w-4 animate-spin" />
+            ) : (
+              <Search className="h-4 w-4" />
+            )}
           </Button>
         </div>
         {searchError && <p className="mt-2 text-sm text-destructive">{searchError}</p>}
