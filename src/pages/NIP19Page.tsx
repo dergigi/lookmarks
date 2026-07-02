@@ -17,7 +17,7 @@ export function NIP19Page() {
 
   if (!identifier) return <NotFound />;
 
-  let decoded: nip19.DecodeResult;
+  let decoded: nip19.DecodedResult;
   try {
     decoded = nip19.decode(identifier);
   } catch {
