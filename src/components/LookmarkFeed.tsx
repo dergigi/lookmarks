@@ -6,6 +6,7 @@ import { NoteCardSkeleton } from '@/components/NoteCardSkeleton';
 import { EmojiBar } from '@/components/EmojiBar';
 import { ConnectedRelaysPill } from '@/components/ConnectedRelaysPill';
 import { useLookmarksFeed } from '@/hooks/useLookmarksFeed';
+import { EYES_EMOJI } from '@/nostr/lookmarks';
 
 export function LookmarkFeed({ pubkey }: { pubkey?: string }) {
   const {
@@ -23,6 +24,8 @@ export function LookmarkFeed({ pubkey }: { pubkey?: string }) {
   } = useLookmarksFeed(pubkey);
 
   const emoji = selectedEmoji.native ?? selectedEmoji.shortcode ?? selectedEmoji.key;
+  const isEyes = selectedEmoji.key === EYES_EMOJI;
+  const noun = isEyes ? 'lookmark' : 'reaction';
 
   let content: React.ReactNode;
   if (lookmarks.length === 0 && loading) {
@@ -51,8 +54,8 @@ export function LookmarkFeed({ pubkey }: { pubkey?: string }) {
         <Eye className="mx-auto mb-4 h-8 w-8 text-muted-foreground" />
         <p className="mx-auto max-w-sm text-sm text-muted-foreground">
           {pubkey
-            ? `No ${emoji} lookmarks found for this user yet.`
-            : `No ${emoji} lookmarks found yet. Check back in a moment.`}
+            ? `No ${emoji} ${noun}s found for this user yet.`
+            : `No ${emoji} ${noun}s found yet. Check back in a moment.`}
         </p>
         {hasMore && (
           <Button variant="ghost" size="sm" className="mt-4" onClick={loadMore}>
@@ -66,7 +69,7 @@ export function LookmarkFeed({ pubkey }: { pubkey?: string }) {
       <div className="space-y-4">
         <div className="flex items-center justify-between text-sm text-muted-foreground">
           <span>
-            {lookmarks.length} {lookmarks.length === 1 ? 'lookmark' : 'lookmarks'} across{' '}
+            {lookmarks.length} {lookmarks.length === 1 ? noun : `${noun}s`} across{' '}
             <ConnectedRelaysPill
               relays={relays}
               description={
@@ -112,7 +115,7 @@ export function LookmarkFeed({ pubkey }: { pubkey?: string }) {
         ) : (
           <p className="py-6 text-center text-sm text-muted-foreground">
             <Eye className="mr-1 inline-block h-4 w-4 opacity-50" />
-            That's all the lookmarks.
+            That's all the {noun}s.
           </p>
         )}
       </div>
